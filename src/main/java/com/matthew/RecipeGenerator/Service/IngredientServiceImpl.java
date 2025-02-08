@@ -3,10 +3,12 @@ package com.matthew.RecipeGenerator.Service;
 import com.matthew.RecipeGenerator.Model.Ingredient;
 import com.matthew.RecipeGenerator.Repo.IngredientRepo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
 
+@Service
 public class IngredientServiceImpl implements IngredientService {
 
     @Autowired
@@ -24,7 +26,7 @@ public class IngredientServiceImpl implements IngredientService {
 
     @Override
     public Optional<Ingredient> getIngredientByName(String name) {
-        return ingredientRepo.findByIngredientName(name);
+        return ingredientRepo.findByName(name);
     }
 
     @Override

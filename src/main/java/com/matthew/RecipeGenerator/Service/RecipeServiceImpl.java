@@ -5,10 +5,12 @@ import com.matthew.RecipeGenerator.Model.Recipe;
 import com.matthew.RecipeGenerator.Repo.IngredientRepo;
 import com.matthew.RecipeGenerator.Repo.RecipeRepo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
 
+@Service
 public class RecipeServiceImpl implements RecipeService {
 
     @Autowired
@@ -26,7 +28,7 @@ public class RecipeServiceImpl implements RecipeService {
 
     @Override
     public Optional<Recipe> getRecipeByName(String name) {
-        return recipeRepo.findByRecipeName(name);
+        return recipeRepo.findByName(name);
     }
 
     @Override
