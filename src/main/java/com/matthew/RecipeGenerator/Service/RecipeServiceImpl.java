@@ -20,12 +20,12 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
-    public Recipe getById(int id) {
+    public Recipe getRecipeById(int id) {
         return recipeRepo.findById(id).orElse(null);
     }
 
     @Override
-    public Optional<Recipe> getByName(String name) {
+    public Optional<Recipe> getRecipeByName(String name) {
         return recipeRepo.findByRecipeName(name);
     }
 

@@ -18,12 +18,12 @@ public class IngredientServiceImpl implements IngredientService {
     }
 
     @Override
-    public Ingredient getById(int id) {
+    public Ingredient getIngredientById(int id) {
         return ingredientRepo.findById(id).orElse(null);
     }
 
     @Override
-    public Optional<Ingredient> getByName(String name) {
+    public Optional<Ingredient> getIngredientByName(String name) {
         return ingredientRepo.findByIngredientName(name);
     }
 

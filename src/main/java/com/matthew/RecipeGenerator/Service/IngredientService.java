@@ -8,8 +8,8 @@ import java.util.Optional;
 public interface IngredientService {
 
     List<Ingredient> getAllIngredients();
-    Ingredient getById(int id);
-    Optional<Ingredient> getByName(String name);
+    Ingredient getIngredientById(int id);
+    Optional<Ingredient> getIngredientByName(String name);
     Ingredient addIngredient(Ingredient ingredient);
     boolean removeIngredient(int id);
     Ingredient updateIngredient(int id, Ingredient updatedIngredient);
