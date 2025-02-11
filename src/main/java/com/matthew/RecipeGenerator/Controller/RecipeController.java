@@ -17,11 +17,17 @@ public class RecipeController {
 
     @Autowired
     private OpenAIService openAIService;
+    @Autowired
     private RecipeService recipeService;
 
     @GetMapping
     public ResponseEntity<String> getRecipesByIngredients(@RequestParam List<String> ingredients) {
-        return ResponseEntity.ok(openAIService.generateRecipe(String.join(", ", ingredients)));
+        String raw_recipe = openAIService.generateRecipe(String.join(", ", ingredients));
+        List<Recipe> recipes = openAIService.parseRecipes(raw_recipe);
+        for (Recipe recipe : recipes) {
+            recipeService.addRecipe(recipe);
+        }
+        return ResponseEntity.ok(raw_recipe);
     }
 
     @GetMapping("/{id}")
