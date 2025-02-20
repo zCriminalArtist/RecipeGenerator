@@ -1,5 +1,6 @@
 package com.matthew.RecipeGenerator.Controller;
 
+import com.matthew.RecipeGenerator.Model.Ingredient;
 import com.matthew.RecipeGenerator.Model.Recipe;
 import com.matthew.RecipeGenerator.Service.OpenAIService;
 import com.matthew.RecipeGenerator.Service.RecipeService;
@@ -21,13 +22,18 @@ public class RecipeController {
     private RecipeService recipeService;
 
     @GetMapping
-    public ResponseEntity<String> getRecipesByIngredients(@RequestParam List<String> ingredients) {
-        String raw_recipe = openAIService.generateRecipe(String.join(", ", ingredients));
-        List<Recipe> recipes = openAIService.parseRecipes(raw_recipe);
-        for (Recipe recipe : recipes) {
-            recipeService.addRecipe(recipe);
+    public ResponseEntity<?> getRecipes(@RequestParam(required = false) List<String> ingredients) {
+        if (ingredients == null || ingredients.isEmpty()) {
+            List<Recipe> allRecipes = recipeService.getAllRecipes();
+            return ResponseEntity.ok(allRecipes);
+        } else {
+            String raw_recipe = openAIService.generateRecipe(String.join(", ", ingredients));
+            List<Recipe> recipes = openAIService.parseRecipes(raw_recipe);
+            for (Recipe recipe : recipes) {
+                recipeService.addRecipe(recipe);
+            }
+            return ResponseEntity.ok(recipes);
         }
-        return ResponseEntity.ok(raw_recipe);
     }
 
     @GetMapping("/{id}")

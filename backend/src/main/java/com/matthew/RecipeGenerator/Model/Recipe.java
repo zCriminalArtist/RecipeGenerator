@@ -22,16 +22,16 @@ public class Recipe {
 
     @Getter
     @Setter
-    @Column(name = "name", nullable = false)
+    @Column(name = "name", nullable = false, columnDefinition = "TEXT")
     private String name;
 
     @Getter
     @Setter
-    @Column(name = "description", nullable = false)
+    @Column(name = "description", nullable = false, columnDefinition = "TEXT")
     private String description;
 
     @Getter
     @Setter
-    @Column(name = "instructions", nullable = false)
+    @Column(name = "instructions", nullable = false, columnDefinition = "TEXT")
     private String instructions;
 }
