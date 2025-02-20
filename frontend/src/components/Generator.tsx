@@ -1,7 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 
-function IngredientInput() {
+const IngredientInput = () =>  {
     interface Recipe {
         id: number;
         name: string;

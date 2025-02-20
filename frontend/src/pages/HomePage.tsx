@@ -1,8 +1,9 @@
+import IngredientInput from "../components/Generator";
 import Home from "../components/Home";
 
 const HomePage = () => {
     return(<>
-        <Home />
+        <IngredientInput />
     </>)
 }
 
