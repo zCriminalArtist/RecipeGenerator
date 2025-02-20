@@ -35,7 +35,7 @@ public class OpenAIServiceImpl implements OpenAIService {
         headers.set("Authorization", "Bearer " + apiKey);
         headers.set("Content-Type", "application/json");
 
-        String requestBody = "{ \"model\": \"gpt-4o-mini\", \"messages\": [ { \"role\": \"user\", \"content\": \"Generate a recipe using only the following ingredients: " + ingredients + ". Respond in the order of name, description, and instructions without altering the font of the text.\"} ], \"max_completion_tokens\": 100 }";
+        String requestBody = "{ \"model\": \"gpt-4o-mini\", \"messages\": [ { \"role\": \"user\", \"content\": \"Generate a recipe using only the following ingredients: " + ingredients + ". Respond in the order of name, description, and instructions without emphasizing or italicizing the text.\"} ], \"max_completion_tokens\": 100 }";
         HttpEntity<String> entity = new HttpEntity<>(requestBody, headers);
 
         ResponseEntity<String> response = restTemplate.exchange(apiUrl, HttpMethod.POST, entity, String.class);
@@ -56,8 +56,8 @@ public class OpenAIServiceImpl implements OpenAIService {
 
                 Recipe recipe = new Recipe();
                 recipe.setName(parts[0].replace("Name: ", "").trim());
-                recipe.setDescription(parts[1].replace("Description: ", "").trim());
-                recipe.setInstructions(parts[2].replace("Instructions: ", "").replace("\n","").trim());
+                recipe.setDescription(parts[1].replace("Description:", "").trim());
+                recipe.setInstructions(parts[2].replace("Instructions:", "").replace("\n"," ").trim());
                 recipes.add(recipe);
             }
         } catch (Exception e) {

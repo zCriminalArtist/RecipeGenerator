@@ -31,7 +31,8 @@ public class IngredientServiceImpl implements IngredientService {
 
     @Override
     public Ingredient addIngredient(Ingredient ingredient) {
-        return ingredientRepo.save(ingredient);
+        Optional<Ingredient> existingIngredient = ingredientRepo.findByName(ingredient.getName());
+        return existingIngredient.orElseGet(() -> ingredientRepo.save(ingredient));
     }
 
     @Override

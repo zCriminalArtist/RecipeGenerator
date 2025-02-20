@@ -6,6 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Set;
+
 @Data
 @Entity
 @NoArgsConstructor
@@ -26,7 +28,7 @@ public class Ingredient {
 
     @Getter
     @Setter
-    @Column(name = "category", nullable = false)
+    @Column(name = "category")
     private String category;
 
 }

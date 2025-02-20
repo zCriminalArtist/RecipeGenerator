@@ -25,6 +25,11 @@ public class RecipeIngredientServiceImpl implements RecipeIngredientService {
     }
 
     @Override
+    public List<RecipeIngredient> getRecipeIngredientsByRecipeId(int recipeId) {
+        return recipeIngredientRepo.findByRecipeId(recipeId);
+    }
+
+    @Override
     public RecipeIngredient addRecipeIngredient(RecipeIngredient recipeIngredient) {
         return recipeIngredientRepo.save(recipeIngredient);
     }

@@ -1,5 +1,6 @@
 package com.matthew.RecipeGenerator.Model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -11,7 +12,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "recipe_ingredients")
+@Table(name = "recipe_ingredient")
 public class RecipeIngredient {
 
     @Getter
@@ -22,23 +23,24 @@ public class RecipeIngredient {
 
     @Getter
     @Setter
-    @ManyToOne
+    @ManyToOne // Many RecipeIngredients can be associated with a single Recipe.
     @JoinColumn(name = "recipe_id", nullable = false)
+    @JsonBackReference
     private Recipe recipe;
 
     @Getter
     @Setter
-    @ManyToOne
+    @ManyToOne // Many RecipeIngredients can belong to one Ingredient.
     @JoinColumn(name = "ingredient_id", nullable = false)
     private Ingredient ingredient;
 
     @Getter
     @Setter
-    @Column(name = "quantity", nullable = false)
+    @Column(name = "quantity", nullable = true)
     private String quantity; // Stores the amount (e.g., "200", "2", "1/2").
 
     @Getter
     @Setter
-    @Column(name = "unit", nullable = false)
+    @Column(name = "unit", nullable = true)
     private String unit; // Stores the measurement unit (e.g., "grams", "cups", "tablespoons").
 }
