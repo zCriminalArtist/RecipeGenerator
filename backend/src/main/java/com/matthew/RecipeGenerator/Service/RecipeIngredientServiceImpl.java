@@ -1,5 +1,6 @@
 package com.matthew.RecipeGenerator.Service;
 
+import com.matthew.RecipeGenerator.DTO.UpdateRecipeIngredientDTO;
 import com.matthew.RecipeGenerator.Model.RecipeIngredient;
 import com.matthew.RecipeGenerator.Repo.RecipeIngredientRepo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,16 +45,13 @@ public class RecipeIngredientServiceImpl implements RecipeIngredientService {
     }
 
     @Override
-    public RecipeIngredient updateRecipeIngredient(int id, RecipeIngredient updatedRecipeIngredient) {
-        Optional<RecipeIngredient> existingRecipeIngredientOpt = recipeIngredientRepo.findById(id);
-        if (existingRecipeIngredientOpt.isPresent()) {
-            RecipeIngredient existingRecipeIngredient = existingRecipeIngredientOpt.get();
-            existingRecipeIngredient.setRecipe(updatedRecipeIngredient.getRecipe());
-            existingRecipeIngredient.setIngredient(updatedRecipeIngredient.getIngredient());
-            existingRecipeIngredient.setQuantity(updatedRecipeIngredient.getQuantity());
-            existingRecipeIngredient.setUnit(updatedRecipeIngredient.getUnit());
-            return recipeIngredientRepo.save(existingRecipeIngredient);
-        }
-        return null;
+    public void updateRecipeIngredient(int id, UpdateRecipeIngredientDTO updatedRecipeIngredient) {
+        RecipeIngredient recipeIngredient = recipeIngredientRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("RecipeIngredient not found"));
+
+        recipeIngredient.setQuantity(updatedRecipeIngredient.getQuantity());
+        recipeIngredient.setUnit(updatedRecipeIngredient.getUnit());
+
+        recipeIngredientRepo.save(recipeIngredient);
     }
 }
