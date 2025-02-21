@@ -26,6 +26,7 @@ const RecipeViewer = () => {
 
     const [recipes, setRecipes] = useState<Recipe[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [editedIngredients, setEditedIngredients] = useState<{ [key: number]: { quantity: string; unit: string } }>({});
 
     const fetchRecipes = async () => {
         setIsLoading(true);
@@ -39,9 +40,28 @@ const RecipeViewer = () => {
         }
     };
 
+    const handleEditChange = (id: number, field: string, value: string) => {
+        setEditedIngredients((prev) => ({
+            ...prev,
+            [id]: {
+                ...prev[id],
+                [field]: value,
+            },
+        }));
+    };
+
+    const handleUpdate = async (recipeIngredientId: number) => {
+        const { quantity, unit } = editedIngredients[recipeIngredientId];
+        try {
+            await axios.put(`http://localhost:8080/recipeIngredients/${recipeIngredientId}`, { quantity, unit });
+            // fetchRecipes();
+        } catch (error) {
+            console.error("Error updating recipe ingredient:", error);
+        }
+    };
+
     return (
         <div>
-           
             <button onClick={fetchRecipes}>My Recipes</button>
             <div>
                 {isLoading ? (
@@ -54,8 +74,19 @@ const RecipeViewer = () => {
                             <p>Ingredients:</p>
                             <ul>
                                 {recipe.recipeIngredients.map((recipeIngredient) => (
-                                    <li key={recipeIngredient.id}>
-                                        {recipeIngredient.ingredient.name} - {recipeIngredient.quantity} {recipeIngredient.unit}
+                                    <li key={recipeIngredient.id} className="flex items-center space-x-4">
+                                        <p>{recipeIngredient.ingredient.name}</p>
+                                        <input
+                                            type="text"
+                                            value={editedIngredients[recipeIngredient.id]?.quantity || recipeIngredient.quantity}
+                                            onChange={(e) => handleEditChange(recipeIngredient.id, "quantity", e.target.value)}
+                                        />
+                                        <input
+                                            type="text"
+                                            value={editedIngredients[recipeIngredient.id]?.unit || recipeIngredient.unit}
+                                            onChange={(e) => handleEditChange(recipeIngredient.id, "unit", e.target.value)}
+                                        />
+                                        <button onClick={() => handleUpdate(recipeIngredient.id)}>Update</button>
                                     </li>
                                 ))}
                             </ul>
