@@ -1,5 +1,7 @@
 package com.matthew.RecipeGenerator.Security.Jwt;
 
+import com.matthew.RecipeGenerator.Model.User;
+import com.matthew.RecipeGenerator.Security.CustomUserDetailsService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,7 +25,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Autowired
     private JwtUtil jwtUtil;
-    private UserDetailsService userDetailsService;
+    private CustomUserDetailsService customUserDetailsService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
@@ -39,14 +41,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String username = jwtUtil.getUsername(token);
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+            User user = customUserDetailsService.loadUserEntityByUsername(username);
 
             if (jwtUtil.validateToken(token)) {
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             }
         }
+
+//        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+//            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+//
+//            if (jwtUtil.validateToken(token)) {
+//                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+//                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+//                SecurityContextHolder.getContext().setAuthentication(authToken);
+//            }
+//        }
 
         chain.doFilter(request, response);
     }

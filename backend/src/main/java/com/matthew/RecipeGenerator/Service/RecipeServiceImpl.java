@@ -2,6 +2,7 @@ package com.matthew.RecipeGenerator.Service;
 
 import com.matthew.RecipeGenerator.Model.Ingredient;
 import com.matthew.RecipeGenerator.Model.Recipe;
+import com.matthew.RecipeGenerator.Model.User;
 import com.matthew.RecipeGenerator.Repo.IngredientRepo;
 import com.matthew.RecipeGenerator.Repo.RecipeRepo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,5 +55,10 @@ public class RecipeServiceImpl implements RecipeService {
         existingRecipe.setDescription(updatedRecipe.getDescription());
         existingRecipe.setInstructions(updatedRecipe.getInstructions());
         return recipeRepo.save(existingRecipe);
+    }
+
+    @Override
+    public List<Recipe> getRecipesByUser(User user) {
+        return recipeRepo.findByUser(user);
     }
 }

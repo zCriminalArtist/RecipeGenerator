@@ -21,8 +21,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-
-        User user = userRepository.findByUsername(username) .orElseThrow(() ->
+        User user = userRepository.findByUsername(username).orElseThrow(() ->
                 new UsernameNotFoundException("User not exists by Username or Email"));
 
         GrantedAuthority authority = new SimpleGrantedAuthority(user.getRole());
@@ -32,5 +31,10 @@ public class CustomUserDetailsService implements UserDetailsService {
                 user.getPassword(),
                 Collections.singleton(authority)
         );
+    }
+
+    public User loadUserEntityByUsername(String username) throws UsernameNotFoundException {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
     }
 }

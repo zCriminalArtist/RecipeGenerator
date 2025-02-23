@@ -1,5 +1,6 @@
 package com.matthew.RecipeGenerator.Model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -15,6 +16,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 @Entity
 @Table(name = "users")
@@ -60,6 +62,10 @@ public class User implements UserDetails {
     @UpdateTimestamp
     @Column(nullable = false)
     private ZonedDateTime userUpdatedAt;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonManagedReference
+    private List<Recipe> recipes;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
