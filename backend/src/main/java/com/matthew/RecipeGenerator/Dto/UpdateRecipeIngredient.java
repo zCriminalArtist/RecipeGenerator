@@ -1,9 +1,9 @@
-package com.matthew.RecipeGenerator.DTO;
+package com.matthew.RecipeGenerator.Dto;
 
 import lombok.Data;
 
 @Data
-public class UpdateRecipeIngredientDTO {
+public class UpdateRecipeIngredient {
     private String quantity;
     private String unit;
 }

@@ -1,5 +1,6 @@
 import axios from "axios";
 import { useState } from "react";
+import api from "../utils/api";
 
 const RecipeViewer = () => {
 
@@ -31,7 +32,7 @@ const RecipeViewer = () => {
     const fetchRecipes = async () => {
         setIsLoading(true);
         try {
-            const response = await axios.get<Recipe[]>(`http://localhost:8080/recipes`);
+            const response = await api.get<Recipe[]>(`http://localhost:8080/recipes`);
             setRecipes(response.data);
         } catch (error) {
             console.error("Error fetching recipes:", error);
@@ -53,7 +54,7 @@ const RecipeViewer = () => {
     const handleUpdate = async (recipeIngredientId: number) => {
         const { quantity, unit } = editedIngredients[recipeIngredientId];
         try {
-            await axios.put(`http://localhost:8080/recipeIngredients/${recipeIngredientId}`, { quantity, unit });
+            await api.put(`http://localhost:8080/recipeIngredients/${recipeIngredientId}`, { quantity, unit });
             // fetchRecipes();
         } catch (error) {
             console.error("Error updating recipe ingredient:", error);
@@ -75,7 +76,7 @@ const RecipeViewer = () => {
                             <ul>
                                 {recipe.recipeIngredients.map((recipeIngredient) => (
                                     <li key={recipeIngredient.id} className="flex items-center space-x-4">
-                                        <p>{recipeIngredient.ingredient.name}</p>
+                                        <p>{recipeIngredient.ingredient.name.replace(/\b\w+/g, word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())}</p>
                                         <input
                                             type="text"
                                             value={editedIngredients[recipeIngredient.id]?.quantity || recipeIngredient.quantity}

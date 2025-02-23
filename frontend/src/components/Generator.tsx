@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import api from "../utils/api";
 
 const IngredientInput = () =>  {
     interface Recipe {
@@ -16,7 +16,7 @@ const IngredientInput = () =>  {
     const fetchRecipe = async () => {
         setIsGenerating(true);
         try {
-            const response = await axios.get<Recipe[]>(`http://localhost:8080/recipes?ingredients=${ingredients.join(",")}`);
+            const response = await api.get<Recipe[]>(`http://localhost:8080/recipes?ingredients=${ingredients.join(",")}`);
             setRecipes(response.data);
         } catch (error) {
             console.error("Error fetching recipes:", error);
@@ -34,7 +34,7 @@ const IngredientInput = () =>  {
             <div>
                 {ingredients.map((ingredient, index) => (
                     <div key={index}>
-                        <span>{ingredient}</span>
+                        <span>{ingredient.replace(/\b\w+/g, word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())}</span>
                         <button onClick={() => deleteIngredient(index)}>X</button>
                     </div>
                 ))}

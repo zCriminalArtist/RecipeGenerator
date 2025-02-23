@@ -1,6 +1,6 @@
 package com.matthew.RecipeGenerator.Service;
 
-import com.matthew.RecipeGenerator.DTO.UpdateRecipeIngredientDTO;
+import com.matthew.RecipeGenerator.Dto.UpdateRecipeIngredient;
 import com.matthew.RecipeGenerator.Model.RecipeIngredient;
 import com.matthew.RecipeGenerator.Repo.RecipeIngredientRepo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,7 +45,7 @@ public class RecipeIngredientServiceImpl implements RecipeIngredientService {
     }
 
     @Override
-    public void updateRecipeIngredient(int id, UpdateRecipeIngredientDTO updatedRecipeIngredient) {
+    public void updateRecipeIngredient(int id, UpdateRecipeIngredient updatedRecipeIngredient) {
         RecipeIngredient recipeIngredient = recipeIngredientRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("RecipeIngredient not found"));
 
