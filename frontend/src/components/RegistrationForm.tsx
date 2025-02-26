@@ -21,7 +21,7 @@ const UserRegistration: React.FC = () => {
 
     const onSubmit = async (data: UserRegistrationData) => {
         try {
-            const response = await api.post('http://localhost:8080/api/auth/register', data);
+            const response = await api.post("/api/auth/register", data);
             console.log('User registered successfully:', response.data);
         } catch (error) {
             console.error('Error registering user:', error);

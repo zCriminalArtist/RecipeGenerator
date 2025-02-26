@@ -1,12 +1,13 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:8080/",
+  baseURL:  import.meta.env.VITE_BACKEND_URL,
 });
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("jwt");
   if (token) {
+    console.log(`Version ${process.env.REACT_APP_BACKEND_URL}`)
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;

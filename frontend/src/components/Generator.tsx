@@ -16,7 +16,7 @@ const IngredientInput = () =>  {
     const fetchRecipe = async () => {
         setIsGenerating(true);
         try {
-            const response = await api.get<Recipe[]>(`http://localhost:8080/recipes?ingredients=${ingredients.join(",")}`);
+            const response = await api.get<Recipe[]>(`/recipes?ingredients=${ingredients.join(",")}`);
             setRecipes(response.data);
         } catch (error) {
             console.error("Error fetching recipes:", error);

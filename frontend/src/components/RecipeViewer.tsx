@@ -1,4 +1,3 @@
-import axios from "axios";
 import { useState } from "react";
 import api from "../utils/api";
 
@@ -32,7 +31,7 @@ const RecipeViewer = () => {
     const fetchRecipes = async () => {
         setIsLoading(true);
         try {
-            const response = await api.get<Recipe[]>(`http://localhost:8080/recipes`);
+            const response = await api.get<Recipe[]>("/recipes");
             setRecipes(response.data);
         } catch (error) {
             console.error("Error fetching recipes:", error);
@@ -54,7 +53,7 @@ const RecipeViewer = () => {
     const handleUpdate = async (recipeIngredientId: number) => {
         const { quantity, unit } = editedIngredients[recipeIngredientId];
         try {
-            await api.put(`http://localhost:8080/recipeIngredients/${recipeIngredientId}`, { quantity, unit });
+            await api.put(`/recipeIngredients/${recipeIngredientId}`, { quantity, unit });
             // fetchRecipes();
         } catch (error) {
             console.error("Error updating recipe ingredient:", error);

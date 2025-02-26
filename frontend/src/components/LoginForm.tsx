@@ -26,7 +26,7 @@ const UserLogin = () => {
 
   const onSubmit = async (data: LoginForm) => {
     try {
-      const response = await api.post("http://localhost:8080/api/auth/login", data);
+      const response = await api.post("/api/auth/login", data);
       const { token } = response.data;
 
       localStorage.setItem("jwt", token);

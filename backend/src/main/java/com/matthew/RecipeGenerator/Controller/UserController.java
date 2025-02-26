@@ -12,7 +12,6 @@ import com.matthew.RecipeGenerator.Model.User;
 
 @RestController
 @RequestMapping("/user")
-@CrossOrigin(origins = "http://localhost:5173")
 public class UserController {
 
     @Autowired

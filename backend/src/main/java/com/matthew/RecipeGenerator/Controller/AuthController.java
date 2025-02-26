@@ -21,7 +21,6 @@ import java.util.Collections;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:5173")
 public class AuthController {
     private final UserRepo userRepository;
     private final PasswordEncoder passwordEncoder;

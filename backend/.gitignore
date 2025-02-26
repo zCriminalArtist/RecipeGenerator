@@ -31,3 +31,10 @@ build/
 
 ### VS Code ###
 .vscode/
+
+
+### DOCKER ###
+Dockerfile*
+docker-compose*.yml
+*.dockerfile
+.docker/
