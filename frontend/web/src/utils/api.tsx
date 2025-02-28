@@ -7,7 +7,6 @@ const api = axios.create({
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("jwt");
   if (token) {
-    console.log(`Version ${process.env.REACT_APP_BACKEND_URL}`)
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;

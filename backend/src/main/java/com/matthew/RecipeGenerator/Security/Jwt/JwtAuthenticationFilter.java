@@ -2,6 +2,7 @@ package com.matthew.RecipeGenerator.Security.Jwt;
 
 import com.matthew.RecipeGenerator.Model.User;
 import com.matthew.RecipeGenerator.Security.CustomUserDetailsService;
+import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -38,7 +39,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         String token = authHeader.substring(7);
-        String username = jwtUtil.getUsername(token);
+        String username = null;
+        try {
+            username = jwtUtil.getUsername(token);
+        } catch (ExpiredJwtException e) {
+            // Handle the expired token case
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("Token has expired");
+            return;
+        }
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             User user = customUserDetailsService.loadUserEntityByUsername(username);

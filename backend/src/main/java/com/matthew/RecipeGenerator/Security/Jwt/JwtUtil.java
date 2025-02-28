@@ -57,4 +57,23 @@ public class JwtUtil {
                 .signWith(key(), SignatureAlgorithm.HS256)
                 .compact();
     }
+
+    public String refreshToken(String token) {
+        Claims claims = Jwts.parser()
+                .verifyWith((SecretKey) key())
+                .build()
+                .parseSignedClaims(token)
+                .getBody();
+
+        Date now = new Date();
+        Date newExpiration = new Date(now.getTime() + expiration);
+
+        return Jwts.builder()
+                .claims(claims)
+                .issuedAt(now)
+                .expiration(newExpiration)
+                .signWith(key(), SignatureAlgorithm.HS256)
+                .compact();
+    }
+
 }

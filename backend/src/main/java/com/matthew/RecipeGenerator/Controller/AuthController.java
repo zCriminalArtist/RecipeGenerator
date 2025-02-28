@@ -5,6 +5,8 @@ import com.matthew.RecipeGenerator.Dto.UserRegistrationRequest;
 import com.matthew.RecipeGenerator.Model.User;
 import com.matthew.RecipeGenerator.Repo.UserRepo;
 import com.matthew.RecipeGenerator.Security.Jwt.JwtUtil;
+import io.jsonwebtoken.ExpiredJwtException;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -26,6 +28,16 @@ public class AuthController {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
+
+    @PostMapping("/refresh-token")
+    public ResponseEntity<?> refreshToken(@RequestParam String token) {
+        try {
+            String newToken = jwtUtil.refreshToken(token);
+            return ResponseEntity.ok(newToken);
+        } catch (ExpiredJwtException e) {
+            return ResponseEntity.status(HttpServletResponse.SC_UNAUTHORIZED).body("Token has expired and cannot be refreshed");
+        }
+    }
 
     @PostMapping("/register")
     public ResponseEntity<String> registerUser(@Valid @RequestBody UserRegistrationRequest request) {
