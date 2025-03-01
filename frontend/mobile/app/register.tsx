@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
-import { View, TextInput, Button, StyleSheet, Text, Alert } from 'react-native';
+import { View, TextInput, StyleSheet, Text, TouchableOpacity, SafeAreaView } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import axios from 'axios';
+import { Link, useRouter } from 'expo-router';
+import axios, { isAxiosError } from 'axios';
 import { API_URL } from '@env';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '@/utils/api';
+import { Colors, lightTheme, darkTheme } from '@/constants/Colors';
+import { useColorScheme } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 interface RegisterScreenProps {
   setIsAuthenticated: (isAuthenticated: boolean) => void;
@@ -26,6 +30,8 @@ type UserRegistrationData = z.infer<typeof userSchema>;
 
 export default function RegisterScreen({ setIsAuthenticated }: RegisterScreenProps) {
   const [error, setError] = useState<string | null>(null);
+  const colorScheme = useColorScheme();
+  const router = useRouter();
 
   const {
     control,
@@ -39,143 +45,248 @@ export default function RegisterScreen({ setIsAuthenticated }: RegisterScreenPro
     try {
       const response = await api.post("/api/auth/register", data);
       if (response.status === 200) {
-        const { token } = response.data;
-        await AsyncStorage.setItem('jwt', token);
-        setIsAuthenticated(true);
-      } else {
-        setError('Registration failed');
+        router.push('/login');
+        setError(null);
       }
     } catch (err) {
-      setError('An error occurred. Please try again.');
+      if (isAxiosError(err) && err.response?.status === 400) {
+        setError(err.response.data);
+      } else {
+        setError('An error occurred. Please try again later.');
+        console.error(err);
+      }
     }
   };
 
+  const theme = colorScheme === 'dark' ? darkTheme : lightTheme;
+
   return (
-    <View style={styles.container}>
-      {error && <Text style={styles.errorText}>{error}</Text>}
-      <View style={styles.inputContainer}>
-        <Text style={styles.label}>Username:</Text>
-        <Controller
-          control={control}
-          name="username"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <TextInput
-              style={styles.input}
-              placeholder="Username"
-              placeholderTextColor="darkgray"
-              onBlur={onBlur}
-              onChangeText={onChange}
-              value={value}
-            />
-          )}
-        />
-        {errors.username && <Text style={styles.errorText}>{errors.username.message}</Text>}
-      </View>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
+      <KeyboardAwareScrollView contentContainerStyle={styles.scrollContainer}>
+        <View style={styles.container}>
+          <View style={styles.header}>
+            <Text style={[styles.title, { color: theme.text }]}>
+              Sign up for <Text style={{ color: Colors.primary }}>MyApp</Text>
+            </Text>
+            <Text style={[styles.subtitle, { color: theme.text }]}>
+              Create your account to get started
+            </Text>
+          </View>
 
-      <View style={styles.inputContainer}>
-        <Text style={styles.label}>Email:</Text>
-        <Controller
-          control={control}
-          name="email"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
-              placeholderTextColor="darkgray"
-              onBlur={onBlur}
-              onChangeText={onChange}
-              value={value}
-            />
-          )}
-        />
-        {errors.email && <Text style={styles.errorText}>{errors.email.message}</Text>}
-      </View>
+          <View style={styles.form}>
+            {error && <Text style={styles.errorText}>{error}</Text>}
+            <View style={styles.inputContainer}>
+              <Text style={[styles.inputLabel, { color: theme.text }]}>Username</Text>
+              <Controller
+                control={control}
+                name="username"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <TextInput
+                    style={[styles.input, theme.input]}
+                    placeholder="Username"
+                    placeholderTextColor="darkgray"
+                    onBlur={onBlur}
+                    onChangeText={onChange}
+                    value={value}
+                  />
+                )}
+              />
+              {errors.username && <Text style={styles.errorText}>{errors.username.message}</Text>}
+            </View>
 
-      <View style={styles.inputContainer}>
-        <Text style={styles.label}>Password:</Text>
-        <Controller
-          control={control}
-          name="password"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              placeholderTextColor="darkgray"
-              secureTextEntry
-              onBlur={onBlur}
-              onChangeText={onChange}
-              value={value}
-            />
-          )}
-        />
-        {errors.password && <Text style={styles.errorText}>{errors.password.message}</Text>}
-      </View>
+            <View style={styles.inputContainer}>
+              <Text style={[styles.inputLabel, { color: theme.text }]}>Email</Text>
+              <Controller
+                control={control}
+                name="email"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <TextInput
+                    style={[styles.input, theme.input]}
+                    placeholder="Email"
+                    placeholderTextColor="darkgray"
+                    onBlur={onBlur}
+                    onChangeText={onChange}
+                    value={value}
+                  />
+                )}
+              />
+              {errors.email && <Text style={styles.errorText}>{errors.email.message}</Text>}
+            </View>
 
-      <View style={styles.inputContainer}>
-        <Text style={styles.label}>First Name:</Text>
-        <Controller
-          control={control}
-          name="firstName"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <TextInput
-              style={styles.input}
-              placeholder="First Name"
-              placeholderTextColor="darkgray"
-              onBlur={onBlur}
-              onChangeText={onChange}
-              value={value}
-            />
-          )}
-        />
-        {errors.firstName && <Text style={styles.errorText}>{errors.firstName.message}</Text>}
-      </View>
+            <View style={styles.inputContainer}>
+              <Text style={[styles.inputLabel, { color: theme.text }]}>Password</Text>
+              <Controller
+                control={control}
+                name="password"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <TextInput
+                    style={[styles.input, theme.input]}
+                    placeholder="Password"
+                    placeholderTextColor="darkgray"
+                    secureTextEntry
+                    onBlur={onBlur}
+                    onChangeText={onChange}
+                    value={value}
+                  />
+                )}
+              />
+              {errors.password && <Text style={styles.errorText}>{errors.password.message}</Text>}
+            </View>
 
-      <View style={styles.inputContainer}>
-        <Text style={styles.label}>Last Name:</Text>
-        <Controller
-          control={control}
-          name="lastName"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <TextInput
-              style={styles.input}
-              placeholder="Last Name"
-              placeholderTextColor="darkgray"
-              onBlur={onBlur}
-              onChangeText={onChange}
-              value={value}
-            />
-          )}
-        />
-        {errors.lastName && <Text style={styles.errorText}>{errors.lastName.message}</Text>}
-      </View>
+            <View style={styles.inputContainer}>
+              <Text style={[styles.inputLabel, { color: theme.text }]}>First Name</Text>
+              <Controller
+                control={control}
+                name="firstName"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <TextInput
+                    style={[styles.input, theme.input]}
+                    placeholder="First Name"
+                    placeholderTextColor="darkgray"
+                    onBlur={onBlur}
+                    onChangeText={onChange}
+                    value={value}
+                  />
+                )}
+              />
+              {errors.firstName && <Text style={styles.errorText}>{errors.firstName.message}</Text>}
+            </View>
 
-      <Button title={isSubmitting ? 'Registering...' : 'Register'} onPress={handleSubmit(onSubmit)} disabled={isSubmitting} />
-    </View>
+            <View style={styles.inputContainer}>
+              <Text style={[styles.inputLabel, { color: theme.text }]}>Last Name</Text>
+              <Controller
+                control={control}
+                name="lastName"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <TextInput
+                    style={[styles.input, theme.input]}
+                    placeholder="Last Name"
+                    placeholderTextColor="darkgray"
+                    onBlur={onBlur}
+                    onChangeText={onChange}
+                    value={value}
+                  />
+                )}
+              />
+              {errors.lastName && <Text style={styles.errorText}>{errors.lastName.message}</Text>}
+            </View>
+
+            <View style={styles.formAction}>
+              <TouchableOpacity
+                onPress={handleSubmit(onSubmit)}
+                disabled={isSubmitting}>
+                <View style={styles.btn}>
+                  <Text style={styles.btnText}>{isSubmitting ? 'Signing up...' : 'Sign up'}</Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <View>
+            <TouchableOpacity
+              onPress={() => {
+                router.push('/login');
+            }}>
+              <Text style={[styles.formFooter, { color: theme.text }]}>
+                Already have an account?{' '}
+                <Link href="/login">
+                  <Text style={{ textDecorationLine: 'underline' }}>Sign in</Text>
+                </Link>
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </KeyboardAwareScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
+  },
+  scrollContainer: {
+    flexGrow: 1,
+  },
+  container: {
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 0,
+    padding: 24,
+  },
+  header: {
+    alignItems: 'center',
     justifyContent: 'center',
-    padding: 16,
+    marginVertical: 60,
+  },
+  title: {
+    fontSize: 31,
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+  subtitle: {
+    fontSize: 15,
+    fontWeight: '500',
+  },
+  form: {
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 0,
   },
   inputContainer: {
     marginBottom: 12,
+    width: '100%',
   },
-  label: {
-    marginBottom: 4,
-    color: 'gray',
+  inputLabel: {
+    fontSize: 17,
+    fontWeight: '600',
+    marginBottom: 8,
   },
   input: {
-    height: 40,
-    borderColor: 'gray',
-    backgroundColor: 'white',
+    height: 60,
+    width: '150%',
+    marginHorizontal: -25, // Offset the container padding
+    paddingHorizontal: 16,
+    fontSize: 15,
+    fontWeight: '500',
     borderWidth: 1,
-    paddingHorizontal: 8,
+    borderStyle: 'solid',
+  },
+  btn: {
+    marginTop: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 30,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderWidth: 1,
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+  btnText: {
+    fontSize: 18,
+    lineHeight: 26,
+    fontWeight: '600',
+    color: '#fff',
   },
   errorText: {
+    fontSize: 15,
+    lineHeight: 22,
+    fontWeight: '500',
+    textAlign: 'center',
+    marginVertical: 10,
     color: 'red',
+  },
+  formAction: {
     marginTop: 4,
+    marginBottom: 16,
+  },
+  formFooter: {
+    paddingVertical: 24,
+    fontSize: 15,
+    fontWeight: '600',
+    textAlign: 'center',
+    letterSpacing: 0.15,
   },
 });
