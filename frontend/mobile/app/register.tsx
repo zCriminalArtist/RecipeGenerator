@@ -62,11 +62,12 @@ export default function RegisterScreen({ setIsAuthenticated }: RegisterScreenPro
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
-      <KeyboardAwareScrollView contentContainerStyle={styles.scrollContainer}>
+      <KeyboardAwareScrollView keyboardDismissMode='on-drag' contentContainerStyle={styles.scrollContainer}>
         <View style={styles.container}>
           <View style={styles.header}>
             <Text style={[styles.title, { color: theme.text }]}>
-              Sign up for <Text style={{ color: Colors.primary }}>MyApp</Text>
+              Sign up for <Text style={{ color: theme.primary }}>Ingredi</Text>
+                <Text style={{ color: theme.secondary, fontStyle: 'italic' }}>Go</Text>
             </Text>
             <Text style={[styles.subtitle, { color: theme.text }]}>
               Create your account to get started
@@ -175,7 +176,7 @@ export default function RegisterScreen({ setIsAuthenticated }: RegisterScreenPro
               <TouchableOpacity
                 onPress={handleSubmit(onSubmit)}
                 disabled={isSubmitting}>
-                <View style={styles.btn}>
+                <View style={[ styles.btn, { backgroundColor: theme.primary, borderColor: theme.primary, }]}>
                   <Text style={styles.btnText}>{isSubmitting ? 'Signing up...' : 'Sign up'}</Text>
                 </View>
               </TouchableOpacity>
@@ -261,8 +262,6 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderWidth: 1,
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
   },
   btnText: {
     fontSize: 18,

@@ -6,6 +6,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import { Colors, darkTheme, lightTheme } from '@/constants/Colors';
 import { Menu, MenuOptions, MenuOption, MenuTrigger, MenuProvider } from 'react-native-popup-menu';
 import { router } from 'expo-router';
+import { jwtDecode } from 'jwt-decode';
 
 interface Recipe {
   id: number;
@@ -23,12 +24,15 @@ export default function HomeScreen() {
   const colorScheme = useColorScheme();
 
   useEffect(() => {
-    // Fetch the username from AsyncStorage or API
     const fetchUsername = async () => {
-      // Replace with actual logic to fetch username
-      const storedUsername = await AsyncStorage.getItem('username');
-      if (storedUsername) {
-        setUsername(storedUsername);
+      const token = await AsyncStorage.getItem('jwt');
+      if (token) {
+        const decodedToken = jwtDecode(token);
+        const username = (decodedToken as { username: string }).username;
+        console.log('Username:', username);
+        if (username) {
+          setUsername(username);
+        }
       }
     };
 
@@ -68,23 +72,23 @@ export default function HomeScreen() {
   return (
     <MenuProvider>
       <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
-        <StatusBar barStyle="light-content" backgroundColor={Colors.primary} />
-        <View style={[styles.header, { backgroundColor: Colors.primary }]}>
+        <StatusBar barStyle="light-content" backgroundColor={ theme.primary } />
+        <View style={[styles.header, { backgroundColor: theme.primary }]}>
           <Text style={styles.headerText}>Welcome, {username}</Text>
           <Menu>
             <MenuTrigger>
               <View style={styles.initialCircle}>
-                <Text style={styles.initialText}>{username.charAt(0).toUpperCase()}</Text>
+                <Text style={[styles.initialText, {color: theme.primary }]}>{username.charAt(0).toUpperCase()}</Text>
               </View>
             </MenuTrigger>
             <MenuOptions>
               <MenuOption onSelect={handleSignOut} customStyles={{ optionText: styles.menuOptionText }}>
-                <Text style={styles.menuOptionText}>Sign Out</Text>
+                <Text style={styles.menuOptionText}>Sign out</Text>
               </MenuOption>
             </MenuOptions>
           </Menu>
         </View>
-        <KeyboardAwareScrollView contentContainerStyle={styles.scrollContainer}>
+        <KeyboardAwareScrollView keyboardDismissMode='on-drag' contentContainerStyle={styles.scrollContainer}>
           <View style={styles.container}>
             <View style={styles.ingredientContainer}>
               {ingredients.map((ingredient, index) => (
@@ -97,7 +101,7 @@ export default function HomeScreen() {
               ))}
             </View>
             <TextInput
-              style={styles.input}
+              style={[styles.input, theme.input]}
               placeholder="Enter ingredient"
               placeholderTextColor="darkgray"
               value={inputValue}
@@ -162,12 +166,11 @@ const styles = StyleSheet.create({
   initialText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: Colors.primary,
   },
   menuOptionText: {
     margin: 10,
     fontSize: 15,
-    fontWeight: 400,
+    fontWeight: 500,
   },
   container: {
     flex: 1,
@@ -191,12 +194,14 @@ const styles = StyleSheet.create({
     color: 'red',
   },
   input: {
-    height: 40,
-    borderColor: 'gray',
-    backgroundColor: 'white',
+    height: 60,
+    width: '150%',
+    marginHorizontal: -25, // Offset the container padding
+    paddingHorizontal: 16,
+    fontSize: 15,
+    fontWeight: '500',
     borderWidth: 1,
-    marginBottom: 12,
-    paddingHorizontal: 8,
+    borderStyle: 'solid',
   },
   recipeContainer: {
     flex: 1,

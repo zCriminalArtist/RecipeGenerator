@@ -1,5 +1,6 @@
 package com.matthew.RecipeGenerator.Security.Jwt;
 
+import com.matthew.RecipeGenerator.Model.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
@@ -13,6 +14,8 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import java.util.Date;
 import java.security.Key;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Function;
 
 @Component
@@ -46,11 +49,15 @@ public class JwtUtil {
     }
 
     public String generateToken(Authentication authentication) {
-        String username = authentication.getName();
+        String username = ((UserDetails) authentication.getPrincipal()).getUsername();
         Date currentDate = new Date();
         Date expireDate = new Date(currentDate.getTime() + expiration);
 
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("username", username);
+
         return Jwts.builder()
+                .claims(claims)
                 .subject(username)
                 .issuedAt(new Date())
                 .expiration(expireDate)

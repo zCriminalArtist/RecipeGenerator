@@ -18,7 +18,7 @@ interface LoginScreenProps {
 
 // Define the login form schema using Zod
 const loginSchema = z.object({
-  username: z.string().min(1, 'Username must be at least 1 character long'),
+  email: z.string().min(1, 'Username must be at least 1 character long'),
   password: z.string().min(6, 'Password must be at least 6 characters long'),
 });
 
@@ -54,7 +54,7 @@ export default function LoginScreen({ setIsAuthenticated }: LoginScreenProps) {
       }
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.status === 401) {
-        setError('Invalid username or password');
+        setError('Invalid email or password');
       } else {
         setError('An error occurred. Please try again later.');
         console.error(err);
@@ -66,28 +66,29 @@ export default function LoginScreen({ setIsAuthenticated }: LoginScreenProps) {
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background} ]}>
-      <KeyboardAwareScrollView contentContainerStyle={styles.scrollContainer}>
+      <KeyboardAwareScrollView keyboardDismissMode='on-drag' contentContainerStyle={styles.scrollContainer}>
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={[styles.title, { color: theme.text }]}>
-              Sign in to <Text style={{ color: Colors.primary }}>MyApp</Text>
+              Sign in to <Text style={{ color: theme.primary }}>Ingredi</Text>
+                <Text style={{ color: theme.secondary, fontStyle: 'italic' }}>Go</Text>
           </Text>
           <Text style={[styles.subtitle, { color: theme.text }]}>
-              Get access to your recipes and more
+              Get access to recipes and more
           </Text>
         </View>
 
         <View style={styles.form}>
           {error && <Text style={styles.errorText}>{error}</Text>}
           <View style={styles.inputContainer}>
-            <Text style={[styles.inputLabel,{ color: theme.text }]}>Username</Text>
+            <Text style={[styles.inputLabel,{ color: theme.text }]}>Email</Text>
             <Controller
               control={control}
-              name="username"
+              name="email"
               render={({ field: { onChange, onBlur, value } }) => (
                 <TextInput
                   style={[styles.input, theme.input]}
-                  placeholder="JohnDoe123"
+                  placeholder="john@example.com"
                   placeholderTextColor="darkgray"
                   onBlur={onBlur}
                   onChangeText={onChange}
@@ -95,7 +96,7 @@ export default function LoginScreen({ setIsAuthenticated }: LoginScreenProps) {
                 />
               )}
             />
-            {errors.username && <Text style={styles.errorText}>{errors.username.message}</Text>}
+            {errors.email && <Text style={styles.errorText}>{errors.email.message}</Text>}
           </View>
 
           <View style={styles.inputContainer}>
@@ -106,7 +107,7 @@ export default function LoginScreen({ setIsAuthenticated }: LoginScreenProps) {
               render={({ field: { onChange, onBlur, value } }) => (
                 <TextInput
                   style={[styles.input, theme.input]}
-                  placeholder="********"
+                  placeholder="********"j
                   placeholderTextColor="darkgray"
                   secureTextEntry
                   onBlur={onBlur}
@@ -122,7 +123,7 @@ export default function LoginScreen({ setIsAuthenticated }: LoginScreenProps) {
             <TouchableOpacity
               onPress={handleSubmit(onSubmit)}
               disabled={isSubmitting}>
-              <View style={styles.btn}>
+              <View style={[ styles.btn, { backgroundColor: theme.primary, borderColor: theme.primary, }]}>
                 <Text style={styles.btnText}>{isSubmitting ? 'Signing in...' : 'Sign in'}</Text>
               </View>
             </TouchableOpacity>
@@ -131,7 +132,7 @@ export default function LoginScreen({ setIsAuthenticated }: LoginScreenProps) {
             onPress={() => {
               // handle link
             }}>
-            <Text style={styles.formLink}>Forgot password?</Text>
+            <Text style={[ styles.formLink, { color: theme.primary }]}>Forgot password?</Text>
           </TouchableOpacity>
         
         </View>
@@ -214,8 +215,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderWidth: 1,
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
+
   },
   btnText: {
     fontSize: 18,
@@ -238,7 +238,6 @@ const styles = StyleSheet.create({
   formLink: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.primary,
     textAlign: 'center',
   },
   linkText: {

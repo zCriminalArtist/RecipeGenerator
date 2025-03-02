@@ -7,7 +7,6 @@ const tintColorLight = '#0a7ea4';
 const tintColorDark = '#fff';
 
 export const Colors = {
-  primary: '#d4690b',
   light: {
     text: '#11181C',
     background: '#fff',
@@ -27,6 +26,8 @@ export const Colors = {
 };
 
 export const lightTheme = {
+  primary: '#81C784',
+  seconday: '#FF9800',
   background: '#e8ecf4',
   text: '#1d2a32',
   input: {
@@ -37,7 +38,9 @@ export const lightTheme = {
 };
 
 export const darkTheme = {
-  background: '#1c1c1c',
+  primary: '#4CAF50',
+  secondary: '#FFB74D',
+  background: '#121212',
   text: '#fff',
   input: {
     backgroundColor: '#333',
