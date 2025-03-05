@@ -27,9 +27,12 @@ export const Colors = {
 
 export const lightTheme = {
   primary: '#81C784',
-  seconday: '#FF9800',
+  secondary: '#FFB74D',
   background: '#e8ecf4',
   text: '#1d2a32',
+  primaryText: '#212121',
+  secondaryText: '#BDBDBD',
+  cardBackground: '#fff',
   input: {
     backgroundColor: '#fff',
     color: '#222',
@@ -42,6 +45,9 @@ export const darkTheme = {
   secondary: '#FFB74D',
   background: '#121212',
   text: '#fff',
+  primaryText: '#E0E0E0',
+  secondaryText: '#757575',
+  cardBackground: '#202020',
   input: {
     backgroundColor: '#333',
     color: '#fff',

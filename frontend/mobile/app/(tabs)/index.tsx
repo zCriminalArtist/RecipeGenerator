@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, TextInput, Button, StyleSheet, Text, FlatList, TouchableOpacity, Alert, SafeAreaView, StatusBar, useColorScheme } from 'react-native';
+import { View, TextInput, StyleSheet, Text, FlatList, TouchableOpacity, Alert, SafeAreaView, StatusBar, useColorScheme, Keyboard, TouchableWithoutFeedback } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '@/utils/api';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { Colors, darkTheme, lightTheme } from '@/constants/Colors';
 import { Menu, MenuOptions, MenuOption, MenuTrigger, MenuProvider } from 'react-native-popup-menu';
 import { router } from 'expo-router';
 import { jwtDecode } from 'jwt-decode';
+import ContentLoader, { Rect } from 'react-content-loader/native';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 interface Recipe {
   id: number;
@@ -69,68 +70,106 @@ export default function HomeScreen() {
 
   const theme = colorScheme === 'dark' ? darkTheme : lightTheme;
 
+  const renderInstructions = (instructions: string) => {
+    const steps = instructions.split(/\d+\.\s/).filter(step => step.trim() !== '');
+    return steps.map((step, index) => (
+      <View key={index} style={styles.instructionStep}>
+        <Text style={[styles.instructionNumber, { color: theme.primaryText }]}>{`${index + 1}.`}</Text>
+        <Text style={[styles.instructionText, { color: theme.primaryText }]}>{step}</Text>
+      </View>
+    ));
+  };
+
   return (
     <MenuProvider>
-      <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
-        <StatusBar barStyle="light-content" backgroundColor={ theme.primary } />
-        <View style={[styles.header, { backgroundColor: theme.primary }]}>
-          <Text style={styles.headerText}>Welcome, {username}</Text>
-          <Menu>
-            <MenuTrigger>
-              <View style={styles.initialCircle}>
-                <Text style={[styles.initialText, {color: theme.primary }]}>{username.charAt(0).toUpperCase()}</Text>
-              </View>
-            </MenuTrigger>
-            <MenuOptions>
-              <MenuOption onSelect={handleSignOut} customStyles={{ optionText: styles.menuOptionText }}>
-                <Text style={styles.menuOptionText}>Sign out</Text>
-              </MenuOption>
-            </MenuOptions>
-          </Menu>
-        </View>
-        <KeyboardAwareScrollView keyboardDismissMode='on-drag' contentContainerStyle={styles.scrollContainer}>
-          <View style={styles.container}>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
+          <StatusBar barStyle="light-content" backgroundColor={ theme.primary } />
+          <View style={[styles.header, { backgroundColor: theme.primary }]}>
+            <View style={styles.headerContent}>
+              <Text style={styles.headerText}>Welcome, {username}</Text>
+              <Menu>
+                <MenuTrigger>
+                  <View style={styles.initialCircle}>
+                    <Text style={[styles.initialText, {color: theme.primary }]}>{username.charAt(0).toUpperCase()}</Text>
+                  </View>
+                </MenuTrigger>
+                <MenuOptions>
+                  <MenuOption onSelect={handleSignOut} customStyles={{ optionText: styles.menuOptionText }}>
+                    <Text style={styles.menuOptionText}>Sign out</Text>
+                  </MenuOption>
+                </MenuOptions>
+              </Menu>
+            </View>
             <View style={styles.ingredientContainer}>
               {ingredients.map((ingredient, index) => (
                 <View key={index} style={styles.ingredient}>
-                  <Text>{ingredient.replace(/\b\w+/g, word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())}</Text>
-                  <TouchableOpacity onPress={() => deleteIngredient(index)}>
-                    <Text style={styles.deleteButton}>X</Text>
+                  <Text style={{ padding: 8, height: '100%', borderTopLeftRadius: 4, borderBottomLeftRadius: 4, color: '#212121', fontWeight: '600', marginRight: 10, backgroundColor: '#DDDDDD'}}>{`${index + 1}. `}</Text>
+                  <Text style={{ color: '#212121'}}>{ingredient.replace(/\b\w+/g, word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())}</Text>
+                  <TouchableOpacity 
+                    onPress={() => deleteIngredient(index)}
+                    style={styles.deleteButton}
+                    activeOpacity={0.3}>
+                    <Icon name="close" size={18} color="red" />
                   </TouchableOpacity>
                 </View>
               ))}
             </View>
-            <TextInput
-              style={[styles.input, theme.input]}
-              placeholder="Enter ingredient"
-              placeholderTextColor="darkgray"
-              value={inputValue}
-              onChangeText={setInputValue}
-              onSubmitEditing={handleAddIngredient}
-            />
-            <Button title="Generate Recipe" onPress={fetchRecipe} />
+          </View>
+          <View style={styles.container}>
+            <View style={styles.inputRow}>
+              <TextInput
+                style={[styles.input, theme.input]}
+                placeholder="Enter ingredient"
+                placeholderTextColor="darkgray"
+                value={inputValue}
+                onChangeText={setInputValue}
+                onSubmitEditing={handleAddIngredient}
+                blurOnSubmit={false}
+              />
+              {inputValue.trim() !== '' && (
+                <TouchableOpacity style={[styles.addButton, {backgroundColor: 'transparent',} ]} onPress={handleAddIngredient}>
+                  <Icon name="add-circle" size={25} color={ theme.secondaryText } />
+                </TouchableOpacity>
+              )}
+            </View>
             <View style={styles.recipeContainer}>
               {isGenerating ? (
-                <Text>Generating...</Text>
+                <ContentLoader
+                  speed={1}
+                  width="100%"
+                  height={500}
+                  backgroundColor={theme.background}
+                  foregroundColor={theme.secondaryText}>
+                  <Rect x="0" y="0" rx="4" ry="4" width="100%" height="200" />
+                </ContentLoader>
               ) : recipes.length > 0 ? (
                 <FlatList
                   data={recipes}
                   keyExtractor={(item) => item.id.toString()}
                   renderItem={({ item }) => (
-                    <View style={styles.recipe}>
-                      <Text style={styles.recipeTitle}>{item.name}</Text>
-                      <Text>Instructions: {item.instructions}</Text>
-                      <Text>Description: {item.description}</Text>
+                    <View style={[styles.recipe, { backgroundColor: theme.cardBackground }]}>
+                      <Text style={[styles.recipeTitle, {color: theme.primaryText }]}>{item.name}</Text>
+                      <Text style={[ { marginBottom: 20, color: theme.primaryText }]}>{item.description}</Text>
+                      <Text style={[ { fontWeight: '600', marginBottom: 3, color: theme.primaryText }]}>Instructions</Text>
+                      {renderInstructions(item.instructions)}
                     </View>
                   )}
                 />
               ) : (
-                <Text>No recipes found</Text>
+                <Text style={[{ color: theme.primaryText }]}>Add '+' ingredients to get started</Text>
               )}
             </View>
           </View>
-        </KeyboardAwareScrollView>
-      </SafeAreaView>
+          {ingredients.length > 0 && (
+            <View style={styles.footer}>
+              <TouchableOpacity style={[ styles.generateButton, { backgroundColor: theme.primary, }]} onPress={fetchRecipe}>
+                <Text style={styles.generateButtonText}>Generate Recipe</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </SafeAreaView>
+      </TouchableWithoutFeedback>
     </MenuProvider>
   );
 }
@@ -139,16 +178,15 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
-  scrollContainer: {
-    flexGrow: 1,
-  },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     padding: 16,
     marginTop: -(StatusBar.currentHeight || 60),
     paddingTop: StatusBar.currentHeight || 60, // Adjust padding to account for status bar
+  },
+  headerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   headerText: {
     fontSize: 24,
@@ -170,7 +208,7 @@ const styles = StyleSheet.create({
   menuOptionText: {
     margin: 10,
     fontSize: 15,
-    fontWeight: 500,
+    fontWeight: '500',
   },
   container: {
     flex: 1,
@@ -179,32 +217,54 @@ const styles = StyleSheet.create({
   ingredientContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginBottom: 12,
+    marginTop: 12,
   },
   ingredient: {
     flexDirection: 'row',
     alignItems: 'center',
+    textAlignVertical: 'center',
     backgroundColor: '#f0f0f0',
-    padding: 8,
+    padding: 0,
     margin: 4,
     borderRadius: 4,
   },
   deleteButton: {
-    marginLeft: 8,
+    marginLeft: 15,
+    padding: 5,
+    borderRadius: 4,
+    backgroundColor: '#f0f0f0',
+  },
+  deleteButtonText: {
+    fontSize: 18,
     color: 'red',
   },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   input: {
+    flex: 1,
     height: 60,
-    width: '150%',
-    marginHorizontal: -25, // Offset the container padding
-    paddingHorizontal: 16,
+    marginHorizontal: -25,
+    paddingHorizontal: 25,
     fontSize: 15,
     fontWeight: '500',
-    borderWidth: 1,
+    borderWidth: 0,
     borderStyle: 'solid',
+  },
+  addButton: {
+    position: 'absolute',
+    alignSelf: 'center',
+    height: 60,
+    justifyContent: 'center',
+    right: 0,
+    padding: 0,
   },
   recipeContainer: {
     flex: 1,
+    paddingTop: 16,
+    padding: 1,
+    alignItems: 'center',
   },
   recipe: {
     backgroundColor: '#f0f0f0',
@@ -213,7 +273,40 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   recipeTitle: {
+    fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 8,
+    marginBottom: 20,
+  },
+  instructionStep: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 5,
+  },
+  instructionNumber: {
+    fontWeight: 'bold',
+    marginRight: 5,
+    fontSize: 14,
+  },
+  instructionText: {
+    flex: 1,
+    fontSize: 14,
+  },
+  footer: {
+    position: 'absolute',
+    bottom: 100,
+    left: 0,
+    right: 0,
+    padding: 16,
+    alignItems: 'center',
+  },
+  generateButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 32,
+    borderRadius: 24,
+  },
+  generateButtonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });

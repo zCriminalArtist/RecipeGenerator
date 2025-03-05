@@ -18,7 +18,7 @@ interface LoginScreenProps {
 
 // Define the login form schema using Zod
 const loginSchema = z.object({
-  email: z.string().min(1, 'Username must be at least 1 character long'),
+  email: z.string().email('Invalid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters long'),
 });
 
@@ -71,7 +71,7 @@ export default function LoginScreen({ setIsAuthenticated }: LoginScreenProps) {
         <View style={styles.header}>
           <Text style={[styles.title, { color: theme.text }]}>
               Sign in to <Text style={{ color: theme.primary }}>Ingredi</Text>
-                <Text style={{ color: theme.secondary, fontStyle: 'italic' }}>Go</Text>
+                <Text style={[{ color: theme.secondary, fontStyle: 'italic' }]}>Go</Text>
           </Text>
           <Text style={[styles.subtitle, { color: theme.text }]}>
               Get access to recipes and more
@@ -107,7 +107,7 @@ export default function LoginScreen({ setIsAuthenticated }: LoginScreenProps) {
               render={({ field: { onChange, onBlur, value } }) => (
                 <TextInput
                   style={[styles.input, theme.input]}
-                  placeholder="********"j
+                  placeholder="********"
                   placeholderTextColor="darkgray"
                   secureTextEntry
                   onBlur={onBlur}
