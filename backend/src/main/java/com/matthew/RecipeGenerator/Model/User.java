@@ -4,10 +4,7 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.security.core.GrantedAuthority;
@@ -58,6 +55,12 @@ public class User implements UserDetails {
 
     @Column(nullable = false)
     private String role;
+
+    private boolean enabled;
+
+    @Getter
+    @Setter
+    private String verificationToken;
 
     @UpdateTimestamp
     @Column(nullable = false)

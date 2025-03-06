@@ -5,6 +5,7 @@ import com.matthew.RecipeGenerator.Dto.UserRegistrationRequest;
 import com.matthew.RecipeGenerator.Model.User;
 import com.matthew.RecipeGenerator.Repo.UserRepo;
 import com.matthew.RecipeGenerator.Security.Jwt.JwtUtil;
+import com.matthew.RecipeGenerator.Service.EmailVerificationService;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -28,6 +29,17 @@ public class AuthController {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
+    private final EmailVerificationService emailVerificationService;
+
+    @GetMapping("/verify-email")
+    public ResponseEntity<String> verifyEmail(@RequestParam String token) {
+        boolean isVerified = emailVerificationService.verifyEmail(token);
+        if (isVerified) {
+            return ResponseEntity.ok("Email verified successfully");
+        } else {
+            return ResponseEntity.badRequest().body("Invalid verification token");
+        }
+    }
 
     @PostMapping("/refresh-token")
     public ResponseEntity<?> refreshToken(@RequestParam String token) {
@@ -55,9 +67,12 @@ public class AuthController {
         user.setLastName(request.getLastName());
         user.setRole("USER");
         user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setEnabled(false);
 
         userRepository.save(user);
-        return ResponseEntity.ok("User registered successfully");
+        emailVerificationService.sendVerificationEmail(user);
+
+        return ResponseEntity.ok("User registered successfully. Please verify your email.");
     }
 
     @PostMapping("/login")

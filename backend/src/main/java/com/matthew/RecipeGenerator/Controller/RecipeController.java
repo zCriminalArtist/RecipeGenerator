@@ -77,4 +77,11 @@ public class RecipeController {
                 ? new ResponseEntity<>(recipe, HttpStatus.OK)
                 : new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteRecipe(@PathVariable int id) {
+        return recipeService.removeRecipe(id)
+                ? ResponseEntity.noContent().build()
+                : ResponseEntity.notFound().build();
+    }
 }
