@@ -2,10 +2,13 @@ package com.matthew.RecipeGenerator.Controller;
 
 import com.matthew.RecipeGenerator.Dto.UserLoginRequest;
 import com.matthew.RecipeGenerator.Dto.UserRegistrationRequest;
+import com.matthew.RecipeGenerator.Model.PasswordResetToken;
 import com.matthew.RecipeGenerator.Model.User;
+import com.matthew.RecipeGenerator.Repo.PasswordResetTokenRepo;
 import com.matthew.RecipeGenerator.Repo.UserRepo;
 import com.matthew.RecipeGenerator.Security.Jwt.JwtUtil;
 import com.matthew.RecipeGenerator.Service.EmailVerificationService;
+import com.matthew.RecipeGenerator.Service.PasswordResetService;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -19,7 +22,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -30,6 +35,36 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
     private final EmailVerificationService emailVerificationService;
+    private final PasswordResetService passwordResetService;
+    private final PasswordResetTokenRepo tokenRepository;
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(@RequestParam String token, @RequestParam String newPassword) {
+        try {
+            passwordResetService.resetPassword(token, newPassword);
+            return ResponseEntity.ok("Password reset successfully.");
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/request-reset")
+    public ResponseEntity<String> requestResetPassword(@RequestParam String email) {
+        Optional<User> userOptional = userRepository.findByEmail(email);
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+            Optional<PasswordResetToken> existingToken = tokenRepository.findByUser(user);
+
+            if (existingToken.isPresent() && existingToken.get().getExpiryDate().isAfter(LocalDateTime.now())) {
+                return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body("Password reset email already sent");
+            } else {
+                passwordResetService.sendResetEmail(user);
+            }
+
+            return ResponseEntity.ok("Password reset email sent");
+        }
+        return ResponseEntity.badRequest().body("Email not found");
+    }
 
     @GetMapping("/verify-email")
     public ResponseEntity<String> verifyEmail(@RequestParam String token) {
@@ -77,18 +112,21 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> loginUser(@RequestBody UserLoginRequest request) {
-        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
+        User user = userRepository.findByEmail(request.getEmail()).orElse(null);
+        if (user == null || !passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            return ResponseEntity.status(HttpServletResponse.SC_UNAUTHORIZED).body("Invalid email or password");
+        }
+
+        if (!user.isEnabled()) {
+            return ResponseEntity.status(HttpServletResponse.SC_UNAUTHORIZED).body("Verify your email to sign in");
+        }
+
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+        );
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String token = jwtUtil.generateToken(authentication);
         return ResponseEntity.ok(Collections.singletonMap("token", token));
-
-//        if (authentication.isAuthenticated()) {
-//            SecurityContextHolder.getContext().setAuthentication(authentication);
-//            String token = jwtUtil.generateToken(request.getUsername());
-//            return ResponseEntity.ok(Collections.singletonMap("token", token));
-//        } else {
-//            return ResponseEntity.status(401).body("Invalid credentials");
-//        }
     }
 }

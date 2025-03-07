@@ -54,7 +54,7 @@ export default function LoginScreen({ setIsAuthenticated }: LoginScreenProps) {
       }
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.status === 401) {
-        setError('Invalid email or password');
+        setError(err.response.data);
       } else {
         setError('An error occurred. Please try again later.');
         console.error(err);
@@ -130,7 +130,7 @@ export default function LoginScreen({ setIsAuthenticated }: LoginScreenProps) {
           </View>
           <TouchableOpacity
             onPress={() => {
-              // handle link
+              router.push('/forgot');
             }}>
             <Text style={[ styles.formLink, { color: theme.primary }]}>Forgot password?</Text>
           </TouchableOpacity>
