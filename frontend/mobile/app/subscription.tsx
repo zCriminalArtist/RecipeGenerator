@@ -39,7 +39,6 @@ const SubscriptionScreen: React.FC = () => {
   const handleCancelSubscription = async (subscriptionId: string) => {
     try {
       await api.delete(`/api/subscription/cancel`);
-      setSubscriptions(subscriptions.filter(sub => sub.subscriptionId !== subscriptionId));
       Alert.alert('Success', 'Subscription cancelled successfully');
     } catch (error) {
       console.error('Failed to cancel subscription', error);
