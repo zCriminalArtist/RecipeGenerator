@@ -50,7 +50,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
         SimpleMailMessage mailMessage = new SimpleMailMessage();
         mailMessage.setTo(user.getEmail());
         mailMessage.setSubject("Password Reset Request");
-        mailMessage.setText("Your code is: " + token);
+        mailMessage.setText("Your code is: " + token + "\n\n" + "Do not share this code with anyone.");
 
         mailSender.send(mailMessage);
     }

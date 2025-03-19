@@ -34,7 +34,7 @@ public class SecurityConfig {
     @Autowired
     private UserDetailsService userDetailsService;
 
-    @Value("${FRONTEND_URL}")  // Inject the frontend URL from the properties file
+    @Value("${FRONTEND_URL}")
     private String frontendUrl;
 
     @Bean
@@ -43,7 +43,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()  // Allow public access for authentication
+                        .requestMatchers("/api/auth/**", "/api/webhook/**").permitAll()  // Allow public access for authentication
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().authenticated()
                 ).httpBasic(Customizer.withDefaults())

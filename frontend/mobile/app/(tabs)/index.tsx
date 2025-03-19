@@ -96,7 +96,20 @@ export default function HomeScreen() {
                 </MenuTrigger>
                 <MenuOptions>
                   <MenuOption onSelect={handleSignOut} customStyles={{ optionText: styles.menuOptionText }}>
-                    <Text style={styles.menuOptionText}>Sign out</Text>
+                    <View style={styles.menuOption}>
+                      <Icon name="logout" size={20} color={theme.primaryText} />
+                      <Text style={styles.menuOptionText}>Sign out</Text>
+                    </View>
+                  </MenuOption>
+                  <MenuOption
+                    onSelect={() => { 
+                      router.push('/subscription'); 
+                    }}
+                    customStyles={{ optionText: styles.menuOptionText }}>
+                    <View style={styles.menuOption}>
+                      <Icon name="loyalty" size={20} color={theme.primaryText} />
+                      <Text style={styles.menuOptionText}>Subscription</Text>
+                    </View>
                   </MenuOption>
                 </MenuOptions>
               </Menu>
@@ -110,7 +123,7 @@ export default function HomeScreen() {
                     onPress={() => deleteIngredient(index)}
                     style={styles.deleteButton}
                     activeOpacity={0.3}>
-                    <Icon name="close" size={18} color="red" />
+                    <Icon name="close" size={18} color={darkTheme.secondaryText} />
                   </TouchableOpacity>
                 </View>
               ))}
@@ -204,6 +217,10 @@ const styles = StyleSheet.create({
   initialText: {
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  menuOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   menuOptionText: {
     margin: 10,

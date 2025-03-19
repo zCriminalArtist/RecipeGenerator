@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
-import { View, TextInput, Button, StyleSheet, Alert, Text, TouchableOpacity, SafeAreaView } from 'react-native';
+import { View, TextInput, StyleSheet, Text, TouchableOpacity, SafeAreaView } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Link, useRouter } from 'expo-router';
 import { useColorScheme } from 'react-native';
 import axios from 'axios';
-import { API_URL } from '@env';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '@/utils/api';
 import { Colors, lightTheme, darkTheme } from '@/constants/Colors';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 interface LoginScreenProps {
   setIsAuthenticated: (isAuthenticated: boolean) => void;
@@ -55,6 +55,12 @@ export default function LoginScreen({ setIsAuthenticated }: LoginScreenProps) {
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.status === 401) {
         setError(err.response.data);
+      } else if (axios.isAxiosError(err) && err.response?.status === 402) {
+        const { customerId, paymentIntentClientSecret } = err.response.data;
+        router.push({
+          pathname: '/trial-ended',
+          params: { id: customerId, paymentIntent: paymentIntentClientSecret },
+        });
       } else {
         setError('An error occurred. Please try again later.');
         console.error(err);
@@ -81,7 +87,9 @@ export default function LoginScreen({ setIsAuthenticated }: LoginScreenProps) {
         <View style={styles.form}>
           {error && <Text style={styles.errorText}>{error}</Text>}
           <View style={styles.inputContainer}>
-            <Text style={[styles.inputLabel,{ color: theme.text }]}>Email</Text>
+            <Text style={[styles.inputLabel,{ color: theme.text }]}>
+              <Icon name="email" size={15} color={theme.text} /> Email
+            </Text>
             <Controller
               control={control}
               name="email"
@@ -100,7 +108,9 @@ export default function LoginScreen({ setIsAuthenticated }: LoginScreenProps) {
           </View>
 
           <View style={styles.inputContainer}>
-            <Text style={[styles.inputLabel, { color: theme.text }]}>Password</Text>
+            <Text style={[styles.inputLabel, { color: theme.text }]}>
+              <Icon name="vpn-key" size={15} color={theme.text} /> Password
+            </Text>
             <Controller
               control={control}
               name="password"
@@ -123,7 +133,7 @@ export default function LoginScreen({ setIsAuthenticated }: LoginScreenProps) {
             <TouchableOpacity
               onPress={handleSubmit(onSubmit)}
               disabled={isSubmitting}>
-              <View style={[ styles.btn, { backgroundColor: theme.primary, borderColor: theme.primary, }]}>
+              <View style={[ styles.btn, { backgroundColor: theme.primary, borderColor: theme.primary, }]} >
                 <Text style={styles.btnText}>{isSubmitting ? 'Signing in...' : 'Sign in'}</Text>
               </View>
             </TouchableOpacity>
@@ -215,7 +225,6 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderWidth: 1,
-
   },
   btnText: {
     fontSize: 18,

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, TextInput, StyleSheet, Text, TouchableOpacity, SafeAreaView } from 'react-native';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Link, useRouter } from 'expo-router';
@@ -21,8 +21,12 @@ const userSchema = z.object({
   username: z.string().min(1, { message: "Username is required" }),
   email: z.string().email({ message: "Invalid email address" }),
   password: z.string().min(6, { message: "Password must be at least 6 characters long" }),
+  confirmPassword: z.string().min(6, { message: "Confirm password must be at least 6 characters long" }),
   firstName: z.string().min(1, { message: "First name is required" }),
   lastName: z.string().min(1, { message: "Last name is required" }),
+}).refine(data => data.password === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
 });
 
 // TypeScript type for form data
@@ -30,6 +34,7 @@ type UserRegistrationData = z.infer<typeof userSchema>;
 
 export default function RegisterScreen({ setIsAuthenticated }: RegisterScreenProps) {
   const [error, setError] = useState<string | null>(null);
+  const [step, setStep] = useState(1);
   const colorScheme = useColorScheme();
   const router = useRouter();
 
@@ -41,11 +46,14 @@ export default function RegisterScreen({ setIsAuthenticated }: RegisterScreenPro
     resolver: zodResolver(userSchema),
   });
 
+  const password = useWatch({ control, name: 'password' });
+  const confirmPassword = useWatch({ control, name: 'confirmPassword' });
+
   const onSubmit = async (data: UserRegistrationData) => {
     try {
       const response = await api.post("/api/auth/register", data);
       if (response.status === 200) {
-        router.push('/login');
+        router.push('/trial');
         setError(null);
       }
     } catch (err) {
@@ -60,27 +68,18 @@ export default function RegisterScreen({ setIsAuthenticated }: RegisterScreenPro
 
   const theme = colorScheme === 'dark' ? darkTheme : lightTheme;
 
-  return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
-      <KeyboardAwareScrollView keyboardDismissMode='on-drag' contentContainerStyle={styles.scrollContainer}>
-        <View style={styles.container}>
-          <View style={styles.header}>
-            <Text style={[styles.title, { color: theme.text }]}>
-              Sign up for <Text style={{ color: theme.primary }}>Ingredi</Text>
-                <Text style={{ color: theme.secondary, fontStyle: 'italic' }}>Go</Text>
-            </Text>
-            <Text style={[styles.subtitle, { color: theme.text }]}>
-              Create your account to get started
-            </Text>
-          </View>
-
-          <View style={styles.form}>
-            {error && <Text style={styles.errorText}>{error}</Text>}
+  const renderStep = () => {
+    switch (step) {
+      case 1:
+        return (
+          <>
             <View style={styles.inputContainer}>
               <Text style={[styles.inputLabel, { color: theme.text }]}>Username</Text>
               <Controller
                 control={control}
                 name="username"
+                defaultValue=""
+                key={'username'}
                 render={({ field: { onChange, onBlur, value } }) => (
                   <TextInput
                     style={[styles.input, theme.input]}
@@ -100,6 +99,8 @@ export default function RegisterScreen({ setIsAuthenticated }: RegisterScreenPro
               <Controller
                 control={control}
                 name="email"
+                key={'email'}
+                defaultValue=""
                 render={({ field: { onChange, onBlur, value } }) => (
                   <TextInput
                     style={[styles.input, theme.input]}
@@ -113,12 +114,18 @@ export default function RegisterScreen({ setIsAuthenticated }: RegisterScreenPro
               />
               {errors.email && <Text style={styles.errorText}>{errors.email.message}</Text>}
             </View>
-
+          </>
+        );
+      case 2:
+        return (
+          <>
             <View style={styles.inputContainer}>
               <Text style={[styles.inputLabel, { color: theme.text }]}>Password</Text>
               <Controller
                 control={control}
                 name="password"
+                key={'password'}
+                defaultValue=""
                 render={({ field: { onChange, onBlur, value } }) => (
                   <TextInput
                     style={[styles.input, theme.input]}
@@ -135,10 +142,38 @@ export default function RegisterScreen({ setIsAuthenticated }: RegisterScreenPro
             </View>
 
             <View style={styles.inputContainer}>
+              <Text style={[styles.inputLabel, { color: theme.text }]}>Confirm Password</Text>
+              <Controller
+                control={control}
+                name="confirmPassword"
+                key={'confirmPassword'}
+                defaultValue=""
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <TextInput
+                    style={[styles.input, theme.input]}
+                    placeholder="Confirm Password"
+                    placeholderTextColor="darkgray"
+                    secureTextEntry
+                    onBlur={onBlur}
+                    onChangeText={onChange}
+                    value={value}
+                  />
+                )}
+              />
+              {errors.confirmPassword && <Text style={styles.errorText}>{errors.confirmPassword.message}</Text>}
+            </View>
+          </>
+        );
+      case 3:
+        return (
+          <>
+            <View style={styles.inputContainer}>
               <Text style={[styles.inputLabel, { color: theme.text }]}>First Name</Text>
               <Controller
                 control={control}
                 name="firstName"
+                key={'firstName'}
+                defaultValue=""
                 render={({ field: { onChange, onBlur, value } }) => (
                   <TextInput
                     style={[styles.input, theme.input]}
@@ -158,6 +193,8 @@ export default function RegisterScreen({ setIsAuthenticated }: RegisterScreenPro
               <Controller
                 control={control}
                 name="lastName"
+                key={'lastName'}
+                defaultValue=""
                 render={({ field: { onChange, onBlur, value } }) => (
                   <TextInput
                     style={[styles.input, theme.input]}
@@ -171,15 +208,61 @@ export default function RegisterScreen({ setIsAuthenticated }: RegisterScreenPro
               />
               {errors.lastName && <Text style={styles.errorText}>{errors.lastName.message}</Text>}
             </View>
+          </>
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
+      <KeyboardAwareScrollView keyboardDismissMode='on-drag' contentContainerStyle={styles.scrollContainer}>
+        <View style={styles.container}>
+          <View style={styles.header}>
+            <Text style={[styles.title, { color: theme.text }]}>
+              Sign up for <Text style={{ color: theme.primary }}>Ingredi</Text>
+                <Text style={{ color: theme.secondary, fontStyle: 'italic' }}>Go</Text>
+            </Text>
+            <Text style={[styles.subtitle, { color: theme.text }]}>
+              Create your account to get started
+            </Text>
+          </View>
+
+          <View style={styles.form}>
+            {error && <Text style={styles.errorText}>{error}</Text>}
+            {renderStep()}
 
             <View style={styles.formAction}>
-              <TouchableOpacity
-                onPress={handleSubmit(onSubmit)}
-                disabled={isSubmitting}>
-                <View style={[ styles.btn, { backgroundColor: theme.primary, borderColor: theme.primary, }]}>
-                  <Text style={styles.btnText}>{isSubmitting ? 'Signing up...' : 'Sign up'}</Text>
-                </View>
-              </TouchableOpacity>
+              {step < 3 ? (
+                <TouchableOpacity
+                  onPress={() => setStep(step + 1)}
+                  disabled={isSubmitting || (step === 2 && password !== confirmPassword)}>
+                  <View style={[
+                    styles.btn,
+                    { backgroundColor: theme.primary, borderColor: theme.primary, opacity: (isSubmitting || (step === 2 && password !== confirmPassword)) ? 0.5 : 1 }
+                  ]}>
+                    <Text style={styles.btnText}>Next</Text>
+                  </View>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  onPress={handleSubmit(onSubmit)}
+                  disabled={isSubmitting}>
+                  <View style={[ styles.btn, { backgroundColor: theme.primary, borderColor: theme.primary, }]}>
+                    <Text style={styles.btnText}>{isSubmitting ? 'Signing up...' : 'Sign up'}</Text>
+                  </View>
+                </TouchableOpacity>
+              )}
+              {step > 1 && (
+                <TouchableOpacity
+                  onPress={() => setStep(step - 1)}
+                  disabled={isSubmitting}>
+                  <View style={[styles.btn, { backgroundColor: theme.secondary, borderColor: theme.secondary }]}>
+                    <Text style={styles.btnText}>Back</Text>
+                  </View>
+                </TouchableOpacity>
+              )}
             </View>
           </View>
 
@@ -218,7 +301,7 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginVertical: 60,
+    marginVertical: 90,
   },
   title: {
     fontSize: 31,
