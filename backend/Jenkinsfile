@@ -1,0 +1,96 @@
+pipeline {
+	agent any
+    environment {
+		AWS_REGION = 'us-east-1'
+        AWS_ACCOUNT_ID = credentials('aws-account-id')
+        ECR_REPO = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/springboot/recipe-generator"
+        EC2_USER = "ec2-user"
+        EC2_IP = credentials('target-ec2-ip')
+        DB_PASSWORD = credentials('DB-PASSWORD')
+        DB_URL = credentials('DB-URL')
+        DB_USERNAME = credentials('DB-USERNAME')
+        FRONTEND_URL = credentials('FRONTEND-URL')
+        JWT_EXPIRATION = credentials('JWT-EXPIRATION')
+        JWT_SECRET = credentials('JWT-SECRET')
+        MAIL_PASSWORD = credentials('MAIL-PASSWORD')
+        MAIL_USERNAME = credentials('MAIL-USERNAME')
+        OPENAI_API_KEY = credentials('OPENAI-API-KEY')
+        STRIPE_API_KEY = credentials('STRIPE-API-KEY')
+        STRIPE_WEBHOOK_SECRET = credentials('STRIPE-WEBHOOK-SECRET')
+    }
+    stages {
+		stage('Clone Repository') {
+			steps {
+				git 'https://github.com/zCriminalArtist/RecipeGenerator.git'
+            }
+        }
+
+        stage('Build JAR') {
+			steps {
+				sh """
+				export BACKEND_URL=$EC2_IP:8080
+				export DB_PASSWORD=$DB_PASSWORD
+				export DB_URL=$DB_URL
+				export DB_USERNAME=$DB_USERNAME
+				export FRONTEND_URL=$FRONTEND_URL
+				export JWT_EXPIRATION=$JWT_EXPIRATION
+				export JWT_SECRET=$JWT_SECRET
+				export MAIL_PASSWORD=$MAIL_PASSWORD
+				export MAIL_USERNAME=$MAIL_USERNAME
+				export OPENAI_API_KEY=$OPENAI_API_KEY
+				export STRIPE_API_KEY=$STRIPE_API_KEY
+				export STRIPE_WEBHOOK_SECRET=$STRIPE_WEBHOOK_SECRET
+				mvn clean package
+				"""
+            }
+        }
+
+        stage('Build Docker Image') {
+			steps {
+				sh 'docker build -t $ECR_REPO .'
+            }
+        }
+
+        stage('Login to AWS ECR') {
+			steps {
+				sh """
+                aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REPO
+                """
+            }
+        }
+
+        stage('Push Image to AWS ECR') {
+			steps {
+				sh 'docker push $ECR_REPO'
+            }
+        }
+
+        stage('Deploy on EC2') {
+			steps {
+				sshagent(['ec2-ssh-key']) {
+					sh """
+                ssh -o StrictHostKeyChecking=no $EC2_USER@$EC2_IP << EOF
+                aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REPO
+                docker pull $ECR_REPO
+                docker stop myapp || true
+                docker rm myapp || true
+                docker run -d --name myapp -p 8080:8080 \\
+                    -e DB_URL=$DB_URL \\
+                    -e DB_USERNAME=$DB_USERNAME \\
+                    -e DB_PASSWORD=$DB_PASSWORD \\
+                    -e JWT_SECRET=$JWT_SECRET \\
+                    -e JWT_EXPIRATION=$JWT_EXPIRATION \\
+                    -e OPENAI_API_KEY=$OPENAI_API_KEY \\
+                    -e STRIPE_API_KEY=$STRIPE_API_KEY \\
+                    -e STRIPE_WEBHOOK_SECRET=$STRIPE_WEBHOOK_SECRET \\
+                    -e FRONTEND_URL=$FRONTEND_URL \\
+                    -e MAIL_USERNAME=$MAIL_USERNAME \\
+                    -e MAIL_PASSWORD=$MAIL_PASSWORD \\
+                    $ECR_REPO
+                EOF
+            	"""
+        		}
+    		}
+		}
+    }
+}

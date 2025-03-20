@@ -34,7 +34,5 @@ build/
 
 
 ### DOCKER ###
-Dockerfile*
 docker-compose*.yml
-*.dockerfile
 .docker/
