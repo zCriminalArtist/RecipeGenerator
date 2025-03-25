@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, TextInput, StyleSheet, Text, TouchableOpacity, SafeAreaView } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, TextInput, StyleSheet, Text, TouchableOpacity, SafeAreaView, Image, Animated, Easing, Dimensions } from 'react-native';
 import { useForm, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -37,6 +37,8 @@ export default function RegisterScreen({ setIsAuthenticated }: RegisterScreenPro
   const [step, setStep] = useState(1);
   const colorScheme = useColorScheme();
   const router = useRouter();
+  const animation = useRef(new Animated.Value(0)).current;
+  const screenWidth = Dimensions.get('window').width;
 
   const {
     control,
@@ -46,8 +48,12 @@ export default function RegisterScreen({ setIsAuthenticated }: RegisterScreenPro
     resolver: zodResolver(userSchema),
   });
 
+  const username = useWatch({ control, name: 'username' });
+  const email = useWatch({ control, name: 'email' });
   const password = useWatch({ control, name: 'password' });
   const confirmPassword = useWatch({ control, name: 'confirmPassword' });
+  const firstName = useWatch({ control, name: 'firstName' });
+  const lastName = useWatch({ control, name: 'lastName' });
 
   const onSubmit = async (data: UserRegistrationData) => {
     try {
@@ -68,11 +74,36 @@ export default function RegisterScreen({ setIsAuthenticated }: RegisterScreenPro
 
   const theme = colorScheme === 'dark' ? darkTheme : lightTheme;
 
-  const renderStep = () => {
+  const animateStep = (direction: 'next' | 'back') => {
+    const toValue = direction === 'next' ? step : step - 2;
+    Animated.timing(animation, {
+      toValue,
+      duration: 400,
+      easing: Easing.inOut(Easing.quad),
+      useNativeDriver: true,
+    }).start(() => {
+      setStep(direction === 'next' ? step + 1 : step - 1);
+    });
+  };
+
+  const isStepValid = (step: number) => {
+    switch (step) {
+      case 1:
+        return username && email;
+      case 2:
+        return password && confirmPassword && password === confirmPassword;
+      case 3:
+        return firstName && lastName;
+      default:
+        return false;
+    }
+  };
+
+  const renderStep = (step: number) => {
     switch (step) {
       case 1:
         return (
-          <>
+          <View style={styles.formStep}>
             <View style={styles.inputContainer}>
               <Text style={[styles.inputLabel, { color: theme.text }]}>Username</Text>
               <Controller
@@ -82,7 +113,7 @@ export default function RegisterScreen({ setIsAuthenticated }: RegisterScreenPro
                 key={'username'}
                 render={({ field: { onChange, onBlur, value } }) => (
                   <TextInput
-                    style={[styles.input, theme.input]}
+                    style={[styles.input, theme.input, { width: screenWidth + 1 }]}
                     placeholder="Username"
                     placeholderTextColor="darkgray"
                     onBlur={onBlur}
@@ -103,7 +134,7 @@ export default function RegisterScreen({ setIsAuthenticated }: RegisterScreenPro
                 defaultValue=""
                 render={({ field: { onChange, onBlur, value } }) => (
                   <TextInput
-                    style={[styles.input, theme.input]}
+                    style={[styles.input, theme.input, { width: screenWidth + 1}]}
                     placeholder="Email"
                     placeholderTextColor="darkgray"
                     onBlur={onBlur}
@@ -114,11 +145,11 @@ export default function RegisterScreen({ setIsAuthenticated }: RegisterScreenPro
               />
               {errors.email && <Text style={styles.errorText}>{errors.email.message}</Text>}
             </View>
-          </>
+          </View>
         );
       case 2:
         return (
-          <>
+          <View style={styles.formStep}>
             <View style={styles.inputContainer}>
               <Text style={[styles.inputLabel, { color: theme.text }]}>Password</Text>
               <Controller
@@ -128,7 +159,7 @@ export default function RegisterScreen({ setIsAuthenticated }: RegisterScreenPro
                 defaultValue=""
                 render={({ field: { onChange, onBlur, value } }) => (
                   <TextInput
-                    style={[styles.input, theme.input]}
+                    style={[styles.input, theme.input, { width: screenWidth + 1 }]}
                     placeholder="Password"
                     placeholderTextColor="darkgray"
                     secureTextEntry
@@ -150,7 +181,7 @@ export default function RegisterScreen({ setIsAuthenticated }: RegisterScreenPro
                 defaultValue=""
                 render={({ field: { onChange, onBlur, value } }) => (
                   <TextInput
-                    style={[styles.input, theme.input]}
+                    style={[styles.input, theme.input, { width: screenWidth + 1 }]}
                     placeholder="Confirm Password"
                     placeholderTextColor="darkgray"
                     secureTextEntry
@@ -162,11 +193,11 @@ export default function RegisterScreen({ setIsAuthenticated }: RegisterScreenPro
               />
               {errors.confirmPassword && <Text style={styles.errorText}>{errors.confirmPassword.message}</Text>}
             </View>
-          </>
+          </View>
         );
       case 3:
         return (
-          <>
+          <View style={styles.formStep}>
             <View style={styles.inputContainer}>
               <Text style={[styles.inputLabel, { color: theme.text }]}>First Name</Text>
               <Controller
@@ -176,7 +207,7 @@ export default function RegisterScreen({ setIsAuthenticated }: RegisterScreenPro
                 defaultValue=""
                 render={({ field: { onChange, onBlur, value } }) => (
                   <TextInput
-                    style={[styles.input, theme.input]}
+                    style={[styles.input, theme.input, { width: screenWidth + 1 }]}
                     placeholder="First Name"
                     placeholderTextColor="darkgray"
                     onBlur={onBlur}
@@ -197,7 +228,7 @@ export default function RegisterScreen({ setIsAuthenticated }: RegisterScreenPro
                 defaultValue=""
                 render={({ field: { onChange, onBlur, value } }) => (
                   <TextInput
-                    style={[styles.input, theme.input]}
+                    style={[styles.input, theme.input, { width: screenWidth + 2}]}
                     placeholder="Last Name"
                     placeholderTextColor="darkgray"
                     onBlur={onBlur}
@@ -206,20 +237,41 @@ export default function RegisterScreen({ setIsAuthenticated }: RegisterScreenPro
                   />
                 )}
               />
+              {(errors.username || errors.email || errors.password || errors.confirmPassword) && (
+              <Text style={styles.errorText}>
+                {errors.username && <Text>{errors.username.message}</Text> || errors.email && <Text>{errors.email.message}</Text> || errors.password && <Text>{errors.password.message}</Text> || errors.confirmPassword && <Text>{errors.confirmPassword.message}</Text>}
+              </Text>
+              )}
               {errors.lastName && <Text style={styles.errorText}>{errors.lastName.message}</Text>}
             </View>
-          </>
+          </View>
         );
       default:
         return null;
     }
   };
 
+  const step1TranslateX = animation.interpolate({
+    inputRange: [0, 1, 2],
+    outputRange: [0, -screenWidth, -2 * screenWidth],
+  });
+
+  const step2TranslateX = animation.interpolate({
+    inputRange: [0, 1, 2],
+    outputRange: [screenWidth, 0, -screenWidth],
+  });
+
+  const step3TranslateX = animation.interpolate({
+    inputRange: [0, 1, 2],
+    outputRange: [2 * screenWidth, screenWidth, 0],
+  });
+
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
-      <KeyboardAwareScrollView keyboardDismissMode='on-drag' contentContainerStyle={styles.scrollContainer}>
+      <KeyboardAwareScrollView scrollEnabled={false} keyboardDismissMode='on-drag' contentContainerStyle={styles.scrollContainer}>
         <View style={styles.container}>
           <View style={styles.header}>
+            <Image source={require('@/assets/images/icon.png')} style={[{ width: 80, height: 80, marginBottom: 20}]}/>
             <Text style={[styles.title, { color: theme.text }]}>
               Sign up for <Text style={{ color: theme.primary }}>Ingredi</Text>
                 <Text style={{ color: theme.secondary, fontStyle: 'italic' }}>Go</Text>
@@ -231,24 +283,47 @@ export default function RegisterScreen({ setIsAuthenticated }: RegisterScreenPro
 
           <View style={styles.form}>
             {error && <Text style={styles.errorText}>{error}</Text>}
-            {renderStep()}
+
+            <View style={styles.stepsContainer}>
+              <Animated.View
+                style={[
+                  styles.formStep,
+                  { transform: [{ translateX: step1TranslateX }] },
+                ]}>
+                {renderStep(1)}
+              </Animated.View>
+
+              <Animated.View
+                style={[
+                  styles.formStep,
+                  { transform: [{ translateX: step2TranslateX }] },
+                ]}>
+                {renderStep(2)}
+              </Animated.View>
+
+              <Animated.View
+                style={[
+                  styles.formStep,
+                  { transform: [{ translateX: step3TranslateX }] },
+                ]}>
+                {renderStep(3)}
+              </Animated.View>
+            </View>
 
             <View style={styles.formAction}>
               {step < 3 ? (
                 <TouchableOpacity
-                  onPress={() => setStep(step + 1)}
-                  disabled={isSubmitting || (step === 2 && password !== confirmPassword)}>
-                  <View style={[
-                    styles.btn,
-                    { backgroundColor: theme.primary, borderColor: theme.primary, opacity: (isSubmitting || (step === 2 && password !== confirmPassword)) ? 0.5 : 1 }
-                  ]}>
+                  onPress={() => animateStep('next')}
+                  disabled={isSubmitting || !isStepValid(step)}>
+                  <View style={[styles.btn, { backgroundColor: theme.primary, borderColor: theme.primary, opacity: (isSubmitting || !isStepValid(step)) ? 0.5 : 1 }]}>
                     <Text style={styles.btnText}>Next</Text>
                   </View>
                 </TouchableOpacity>
               ) : (
+
                 <TouchableOpacity
                   onPress={handleSubmit(onSubmit)}
-                  disabled={isSubmitting}>
+                  disabled={isSubmitting || !isStepValid(step)}>
                   <View style={[ styles.btn, { backgroundColor: theme.primary, borderColor: theme.primary, }]}>
                     <Text style={styles.btnText}>{isSubmitting ? 'Signing up...' : 'Sign up'}</Text>
                   </View>
@@ -256,7 +331,7 @@ export default function RegisterScreen({ setIsAuthenticated }: RegisterScreenPro
               )}
               {step > 1 && (
                 <TouchableOpacity
-                  onPress={() => setStep(step - 1)}
+                  onPress={() => animateStep('back')}
                   disabled={isSubmitting}>
                   <View style={[styles.btn, { backgroundColor: theme.secondary, borderColor: theme.secondary }]}>
                     <Text style={styles.btnText}>Back</Text>
@@ -301,7 +376,7 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginVertical: 90,
+    marginVertical: 75,
   },
   title: {
     fontSize: 31,
@@ -317,6 +392,16 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     flexBasis: 0,
   },
+  stepsContainer: {
+    position: 'relative',
+    width: '100%',
+    height: 250,
+    marginBottom: 16,
+  },
+  formStep: {
+    position: 'absolute', // Ensure each step can overlap others
+    width: '100%',
+  },
   inputContainer: {
     marginBottom: 12,
     width: '100%',
@@ -328,7 +413,6 @@ const styles = StyleSheet.create({
   },
   input: {
     height: 60,
-    width: '150%',
     marginHorizontal: -25, // Offset the container padding
     paddingHorizontal: 16,
     fontSize: 15,
@@ -357,12 +441,12 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     fontWeight: '500',
     textAlign: 'center',
-    marginVertical: 10,
-    color: 'red',
+    marginVertical: 5,
+    color: '#f74a4a',
   },
   formAction: {
-    marginTop: 4,
-    marginBottom: 16,
+    marginTop: 0,
+    marginBottom: 0,
   },
   formFooter: {
     paddingVertical: 24,

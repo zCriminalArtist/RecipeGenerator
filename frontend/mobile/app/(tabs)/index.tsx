@@ -8,6 +8,7 @@ import { router } from 'expo-router';
 import { jwtDecode } from 'jwt-decode';
 import ContentLoader, { Rect } from 'react-content-loader/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import axios from 'axios';
 
 interface Recipe {
   id: number;
@@ -46,7 +47,17 @@ export default function HomeScreen() {
       const response = await api.get<Recipe[]>(`/recipes?ingredients=${ingredients.join(',')}`);
       setRecipes(response.data);
     } catch (error) {
-      Alert.alert('Error', 'Error fetching recipes');
+      if (axios.isAxiosError(error) && error.response?.status === 402) {
+        const { customerId, paymentIntentClientSecret } = error.response.data;
+        router.push({
+          pathname: '/trial-ended',
+          params: { id: customerId, paymentIntent: paymentIntentClientSecret },
+        });
+      } else {
+        Alert.alert('Error', 'Error fetching recipes');
+        console.error(error);
+      }
+      
     } finally {
       setIsGenerating(false);
     }

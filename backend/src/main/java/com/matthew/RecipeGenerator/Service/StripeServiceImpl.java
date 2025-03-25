@@ -3,17 +3,14 @@ package com.matthew.RecipeGenerator.Service;
 import com.matthew.RecipeGenerator.Model.User;
 import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
-import com.stripe.model.Customer;
-import com.stripe.model.SetupIntent;
-import com.stripe.model.Subscription;
-import com.stripe.model.SubscriptionCollection;
-import com.stripe.model.checkout.Session;
+import com.stripe.model.*;
 import com.stripe.param.*;
-import com.stripe.param.checkout.SessionCreateParams;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class StripeServiceImpl implements StripeService {
@@ -55,7 +52,7 @@ public class StripeServiceImpl implements StripeService {
                 .setDescription("AI Recipe Generator Subscription");
 
         if (trial) {
-            paramsBuilder.setTrialEnd((System.currentTimeMillis() / 1000L) + 30);
+            paramsBuilder.setTrialEnd((System.currentTimeMillis() / 1000L) + 60);
         }
 
         SubscriptionCreateParams params = paramsBuilder.build();
@@ -73,6 +70,22 @@ public class StripeServiceImpl implements StripeService {
         subscription.update(params);
     }
 
+    public Map<String, String> restartSubscription(User user) throws Exception {
+        Stripe.apiKey = this.apiKey;
+        if (user.getSubscriptionStatus().equals("canceled_pending")) {
+            Subscription subscription = retrieveSubscription(user.getStripeCustomerId());
+            SubscriptionUpdateParams params = SubscriptionUpdateParams.builder()
+                    .setCancelAtPeriodEnd(false)
+                    .build();
+            subscription.update(params);
+            user.setSubscriptionStatus("active");
+            return null;
+        } else if (user.getSubscriptionStatus().equals("canceled")) {
+            return issuePaymentIntent(user);
+        }
+        return null;
+    }
+
     @Override
     public Subscription retrieveSubscription(String customerId) throws StripeException {
         Stripe.apiKey = this.apiKey;
@@ -84,36 +97,47 @@ public class StripeServiceImpl implements StripeService {
     }
 
     @Override
-    public Session createCheckoutSession(String customerId, String priceId) throws StripeException {
+    public Map<String, String> issuePaymentIntent(User user) throws Exception {
         Stripe.apiKey = this.apiKey;
-        return Session.create(
-                SessionCreateParams.builder()
-                        .setMode(SessionCreateParams.Mode.SUBSCRIPTION)
-                        .setCustomer(customerId)
-                        .addLineItem(
-                                SessionCreateParams.LineItem.builder()
-                                        .setPrice(priceId)
-                                        .setQuantity(1L)
-                                        .build()
-                        )
-                        .setSuccessUrl("http://localhost:3000/success")
-                        .setCancelUrl("http://localhost:3000/cancel")
-                        .build()
-        );
-    }
+        Subscription subscription = retrieveSubscription(user.getStripeCustomerId());
+        Map<String, String> response = new HashMap<>();
+        if (subscription == null) {
+            createSubscription(user.getStripeCustomerId(), "price_1R0TNnLEmXBb6SRmWfHWlVzN", false);
+            subscription = retrieveSubscription(user.getStripeCustomerId());
+            System.out.println("Subscription created");
+        }
+        if (subscription.getTrialEnd() != null &&
+                subscription.getTrialEnd() < System.currentTimeMillis() / 1000L) {
+            String latestInvoiceId = subscription.getLatestInvoice();
+            if (latestInvoiceId == null) {
+                throw new Exception("No invoice found for this subscription.");
+            }
 
-    @Override
-    public String createSetupIntent(String customerId) throws StripeException {
-        Stripe.apiKey = this.apiKey;
+            Invoice invoice = Invoice.retrieve(latestInvoiceId);
+            if (invoice == null) {
+                throw new Exception("No invoice found for this subscription.");
+            }
 
-        SetupIntentCreateParams params = SetupIntentCreateParams.builder()
-                .addPaymentMethodType("card")
-                .setCustomer(customerId)
-                .setUsage(SetupIntentCreateParams.Usage.OFF_SESSION)
-                .build();
+            if (!invoice.getStatus().equals("paid")) {
+                if (invoice.getStatus().equals("draft")) {
+                    invoice = invoice.finalizeInvoice();
+                }
 
-        SetupIntent setupIntent = SetupIntent.create(params);
+                if (invoice.getPaymentIntent() == null) {
+                    InvoicePayParams payParams = InvoicePayParams.builder().build();
+                    invoice.pay(payParams);
+                }
 
-        return setupIntent.getClientSecret();
+                PaymentIntent paymentIntent = PaymentIntent.retrieve(invoice.getPaymentIntent());
+                paymentIntent.setSetupFutureUsage(String.valueOf(PaymentIntentCreateParams.SetupFutureUsage.OFF_SESSION));
+
+                response.put("customerId", user.getStripeCustomerId());
+                response.put("paymentIntentId", paymentIntent.getId());
+                response.put("paymentIntentClientSecret", paymentIntent.getClientSecret());
+                response.put("status", paymentIntent.getStatus());
+
+            }
+        }
+        return response;
     }
 }

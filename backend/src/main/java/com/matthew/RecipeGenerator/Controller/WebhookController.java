@@ -3,11 +3,10 @@ package com.matthew.RecipeGenerator.Controller;
 import com.matthew.RecipeGenerator.Model.User;
 import com.matthew.RecipeGenerator.Repo.UserRepo;
 import com.stripe.exception.SignatureVerificationException;
-import com.stripe.model.Event;
-import com.stripe.model.Invoice;
-import com.stripe.model.StripeObject;
-import com.stripe.model.Subscription;
+import com.stripe.exception.StripeException;
+import com.stripe.model.*;
 import com.stripe.net.Webhook;
+import com.stripe.param.SubscriptionUpdateParams;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -36,7 +35,16 @@ public class WebhookController {
             Event event = Webhook.constructEvent(payload, sigHeader, endpointSecret);
             StripeObject stripeObject = event.getData().getObject();
 
-            if ("customer.subscription.deleted".equals(event.getType())) {
+            if ("setup_intent.succeeded".equals(event.getType())) {
+                SetupIntent setupIntent = (SetupIntent) stripeObject;
+                String customerId = setupIntent.getCustomer();
+                String paymentMethodId = setupIntent.getPaymentMethod();
+                Optional<User> userOptional = userRepository.findByStripeCustomerId(customerId);
+                if (userOptional.isPresent()) {
+                    User user = userOptional.get();
+                    Subscription.retrieve(user.getStripeSubscriptionId()).update(SubscriptionUpdateParams.builder().setDefaultPaymentMethod(paymentMethodId).build());
+                }
+            } else if ("customer.subscription.deleted".equals(event.getType())) {
                 System.out.println("Subscription deleted");
                 Subscription subscription = (Subscription) event.getDataObjectDeserializer().getObject().orElse(null);
                 if (subscription != null) {
@@ -56,7 +64,7 @@ public class WebhookController {
                 Optional<User> optionalUser = userRepository.findByStripeCustomerId(stripeCustomerId);
                 if (optionalUser.isPresent()) {
                     User user = optionalUser.get();
-                    if (!user.getSubscriptionStatus().equals("trialing")) {
+                    if (!(user.getSubscriptionStatus().equals("trialing") || user.getSubscriptionStatus().equals("active"))) {
                         user.setSubscriptionStatus("active");
                         userRepository.save(user);
                     }
@@ -72,7 +80,7 @@ public class WebhookController {
                     if ("past_due".equals(subscription.getStatus())) {
                         user.setSubscriptionStatus("past_due");
                         userRepository.save(user);
-                    } else {
+                    } else if ("trialing".equals(user.getSubscriptionStatus())) {
                         Long trialEnd = subscription.getTrialEnd();
                         if (trialEnd != null) {
                             LocalDateTime trialEndTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(trialEnd), ZoneId.systemDefault());
@@ -81,7 +89,7 @@ public class WebhookController {
                                     trialEndTime.getDayOfYear() == currentTime.getDayOfYear() &&
                                     trialEndTime.getHour() == currentTime.getHour()) {
                                 System.out.println("Trial end time is within the same hour as the current system time");
-                                user.setSubscriptionStatus("past_due");
+                                user.setSubscriptionStatus("trial_expired");
                                 userRepository.save(user);
                             }
                         }
@@ -91,6 +99,8 @@ public class WebhookController {
 
         } catch (SignatureVerificationException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid signature");
+        } catch (StripeException e) {
+            throw new RuntimeException(e);
         }
 
         return ResponseEntity.ok("Event received");

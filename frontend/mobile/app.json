@@ -1,15 +1,19 @@
 {
   "expo": {
-    "name": "mobile",
+    "name": "IngrediGo",
     "slug": "mobile",
-    "version": "1.0.0",
+    "version": "0.1.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "me.zcriminalartist.recipegenerator",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -36,6 +40,15 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "5aefaa06-fb9d-48b9-a1d3-c97ada565cac"
+      }
+    },
+    "owner": "zcriminalartist"
   }
 }

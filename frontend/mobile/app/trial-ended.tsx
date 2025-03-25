@@ -50,69 +50,7 @@ export default function TrialEndedScreen() {
     }
   };
 
-// const handleAttachPaymentMethod = async () => {
-//     const clientSecret = Array.isArray(params?.id) ? params.id[0] : params?.id;
-//     console.log(clientSecret);
-//     if (!clientSecret) {
-//         Alert.alert('Error', 'Client secret not found.');
-//         return;
-//     }
-
-//     const { error } = await confirmSetupIntent(clientSecret, {
-//         paymentMethodType: 'Card',
-//     });
-
-//     if (error) {
-//         Alert.alert('Error', error.message || 'Failed to attach payment method.');
-//     } else {
-//         Alert.alert('Success', 'Payment method saved for future billing!');
-//     }
-// };
-
-// const handleSubscribe = async () => {
-//     try {
-//         const { paymentMethod } = await createPaymentMethod({
-//             paymentMethodType: 'Card',
-//         });
-
-//         const response = await api.post(
-//             'http://localhost:8080/api/stripe/set-payment-method',
-//             {
-//                 paymentMethodId: paymentMethod?.id,
-//             }
-//         );
-
-//         Alert.alert('Success', 'Subscription created successfully!');
-
-//     } catch (error) {
-//         Alert.alert('Error', 'Failed to create subscription.');
-//     }
-// };
-
-  if (url) {
-    return (
-      <SafeAreaView style={{ flex: 1 }}>
-        <View style={{ flex: 1 }}>
-          {/* <TouchableOpacity onPress={() => setUrl(null)} style={styles.webViewCloseButton}>
-            <Text style={styles.webViewCloseButtonText}>✕</Text>
-          </TouchableOpacity> */}
-          <WebView source={{ uri: url }} onNavigationStateChange={(event) => {
-                        if (event.url.includes('/success')) {
-                            Alert.alert('Payment Successful!');
-                            setUrl(null);
-                        }
-                        if (event.url.includes('/cancel')) {
-                            Alert.alert('Payment Canceled');
-                            setUrl(null);
-                        }
-                    }} style={{ flex: 1 }} />
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-    const publishableKey = process.env.EXPO_PUBLIC_STRIPE_KEY || 'default_publishable_key';
-    console.log('Publishable key:', publishableKey);
+  const publishableKey = process.env.EXPO_PUBLIC_STRIPE_KEY || 'default_publishable_key';
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
@@ -121,36 +59,18 @@ export default function TrialEndedScreen() {
             <Text style={[styles.closeButtonText, { color: theme.text }]}>✕</Text>
           </TouchableOpacity>
           <Text style={[styles.title, { color: theme.text }]}>The everyday package</Text>
-          {/* <Image source={require('@/assets/icons.png')} style={styles.image} /> */}
-
-          {/* <StripeProvider publishableKey={publishableKey}>
-            <Text style={{ marginBottom: 20, fontSize: 20 }}>
-                Subscribe for $5/m onth
-            </Text>
-
-            <CardForm
-                style={{
-                    width: '100%',
-                    height: 135,
-                    marginVertical: 20,
-                }}
-            />
-
-
-            <Button title="Subscribe Now" onPress={handleAttachPaymentMethod} />
-            </StripeProvider> */}
 
           <View style={styles.pricing}>
-            <TouchableOpacity style={styles.pricingOption}>
+            {/* <TouchableOpacity style={styles.pricingOption}>
               <Text style={[styles.pricingText, { color: theme.text }]}>Yearly $125.98</Text>
               <Text style={[styles.pricingSubText, { color: theme.text }]}>$10.49 / month</Text>
               <View style={styles.saveBadge}>
                 <Text style={styles.saveBadgeText}>Save $42</Text>
               </View>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
             <TouchableOpacity style={styles.pricingOption}>
-              <Text style={[styles.pricingText, { color: theme.text }]}>Monthly $13.98</Text>
-              <Text style={[styles.pricingSubText, { color: theme.text }]}>$13.98 / month</Text>
+              <Text style={[styles.pricingText, { color: theme.text }]}>Monthly $4.99</Text>
+              <Text style={[styles.pricingSubText, { color: theme.text }]}>$4.99 / month</Text>
             </TouchableOpacity>
           </View>
           <StripeProvider publishableKey={publishableKey}

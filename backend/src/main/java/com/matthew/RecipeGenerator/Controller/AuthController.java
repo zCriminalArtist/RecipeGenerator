@@ -141,68 +141,120 @@ public class AuthController {
         }
 
         if (!user.isEnabled()) {
-            return ResponseEntity.status(HttpServletResponse.SC_UNAUTHORIZED).body("Verify your email to sign in");
+            return ResponseEntity.status(HttpServletResponse.SC_UNAUTHORIZED).body("Verify your email to continue");
         }
 
-        String status = user.getSubscriptionStatus();
-        switch (status) {
-            case "active":
-                break;
-            case "trialing":
-                break;
-            case "past_due":
-                try {
-                    Subscription subscription = stripeService.retrieveSubscription(user.getStripeCustomerId());
-                    if (subscription == null) {
-                        stripeService.createSubscription(user.getStripeCustomerId(), "price_1R0TNnLEmXBb6SRmWfHWlVzN", false);
-                        subscription = stripeService.retrieveSubscription(user.getStripeCustomerId());
-                    }
-                    if (subscription.getTrialEnd() != null &&
-                            subscription.getTrialEnd() < System.currentTimeMillis() / 1000L) {
-                        String latestInvoiceId = subscription.getLatestInvoice();
-                        if (latestInvoiceId == null) {
-                            throw new Exception("No invoice found for this subscription.");
-                        }
-
-                        Invoice invoice = Invoice.retrieve(latestInvoiceId);
-                        if (invoice == null) {
-                            throw new Exception("No invoice found for this subscription.");
-                        }
-
-                        if (!invoice.getStatus().equals("paid")) {
-                            if (invoice.getStatus().equals("draft")) {
-                                invoice = invoice.finalizeInvoice();
-                            }
-
-                            if (invoice.getPaymentIntent() == null) {
-                                InvoicePayParams payParams = InvoicePayParams.builder().build();
-                                invoice.pay(payParams);
-                            }
-
-                            PaymentIntent paymentIntent = PaymentIntent.retrieve(invoice.getPaymentIntent());
-                            paymentIntent.setSetupFutureUsage(String.valueOf(PaymentIntentCreateParams.SetupFutureUsage.OFF_SESSION));
-
-                            Map<String, String> response = new HashMap<>();
-                            response.put("customerId", user.getStripeCustomerId());
-                            response.put("paymentIntentId", paymentIntent.getId());
-                            response.put("paymentIntentClientSecret", paymentIntent.getClientSecret());
-                            response.put("status", paymentIntent.getStatus());
-
-
-                            return ResponseEntity.status(HttpServletResponse.SC_PAYMENT_REQUIRED).body(response);
-                        }
-                    }
-                } catch (StripeException e) {
-                    return ResponseEntity.status(HttpServletResponse.SC_INTERNAL_SERVER_ERROR).body("Error retrieving subscription: " + e.getMessage());
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-                break;
-            case "canceled":
-                break;
-            default:
-                break;
-        }
+//        String status = user.getSubscriptionStatus();
+//        switch (status) {
+//            case "active":
+//                break;
+//            case "trialing":
+//                break;
+//            case "past_due":
+//                try {
+//                    Subscription subscription = stripeService.retrieveSubscription(user.getStripeCustomerId());
+//                    if (subscription == null) {
+//                        stripeService.createSubscription(user.getStripeCustomerId(), "price_1R0TNnLEmXBb6SRmWfHWlVzN", false);
+//                        subscription = stripeService.retrieveSubscription(user.getStripeCustomerId());
+//                        System.out.println("Subscription created");
+//                    }
+//                    if (subscription.getTrialEnd() != null &&
+//                            subscription.getTrialEnd() < System.currentTimeMillis() / 1000L) {
+//                        String latestInvoiceId = subscription.getLatestInvoice();
+//                        if (latestInvoiceId == null) {
+//                            throw new Exception("No invoice found for this subscription.");
+//                        }
+//
+//                        Invoice invoice = Invoice.retrieve(latestInvoiceId);
+//                        if (invoice == null) {
+//                            throw new Exception("No invoice found for this subscription.");
+//                        }
+//
+//                        if (!invoice.getStatus().equals("paid")) {
+//                            if (invoice.getStatus().equals("draft")) {
+//                                invoice = invoice.finalizeInvoice();
+//                            }
+//
+//                            if (invoice.getPaymentIntent() == null) {
+//                                InvoicePayParams payParams = InvoicePayParams.builder().build();
+//                                invoice.pay(payParams);
+//                            }
+//
+//                            PaymentIntent paymentIntent = PaymentIntent.retrieve(invoice.getPaymentIntent());
+//                            paymentIntent.setSetupFutureUsage(String.valueOf(PaymentIntentCreateParams.SetupFutureUsage.OFF_SESSION));
+//
+//                            Map<String, String> response = new HashMap<>();
+//                            response.put("customerId", user.getStripeCustomerId());
+//                            response.put("paymentIntentId", paymentIntent.getId());
+//                            response.put("paymentIntentClientSecret", paymentIntent.getClientSecret());
+//                            response.put("status", paymentIntent.getStatus());
+//
+//
+//                            return ResponseEntity.status(HttpServletResponse.SC_PAYMENT_REQUIRED).body(response);
+//                        }
+//                    }
+//                } catch (StripeException e) {
+//                    return ResponseEntity.status(HttpServletResponse.SC_INTERNAL_SERVER_ERROR).body("Error retrieving subscription: " + e.getMessage());
+//                } catch (Exception e) {
+//                    throw new RuntimeException(e);
+//                }
+//                break;
+//            case "canceled":
+//                break;
+//            case "canceled_pending":
+//                break;
+//            case "trial_expired":
+//                try {
+//                    Subscription subscription = stripeService.retrieveSubscription(user.getStripeCustomerId());
+//                    if (subscription == null) {
+//                        stripeService.createSubscription(user.getStripeCustomerId(), "price_1R0TNnLEmXBb6SRmWfHWlVzN", false);
+//                        subscription = stripeService.retrieveSubscription(user.getStripeCustomerId());
+//                        System.out.println("Subscription created");
+//                    }
+//                    if (subscription.getTrialEnd() != null &&
+//                            subscription.getTrialEnd() < System.currentTimeMillis() / 1000L) {
+//                        String latestInvoiceId = subscription.getLatestInvoice();
+//                        if (latestInvoiceId == null) {
+//                            throw new Exception("No invoice found for this subscription.");
+//                        }
+//
+//                        Invoice invoice = Invoice.retrieve(latestInvoiceId);
+//                        if (invoice == null) {
+//                            throw new Exception("No invoice found for this subscription.");
+//                        }
+//
+//                        if (!invoice.getStatus().equals("paid")) {
+//                            if (invoice.getStatus().equals("draft")) {
+//                                invoice = invoice.finalizeInvoice();
+//                            }
+//
+//                            if (invoice.getPaymentIntent() == null) {
+//                                InvoicePayParams payParams = InvoicePayParams.builder().build();
+//                                invoice.pay(payParams);
+//                            }
+//
+//                            PaymentIntent paymentIntent = PaymentIntent.retrieve(invoice.getPaymentIntent());
+//                            paymentIntent.setSetupFutureUsage(String.valueOf(PaymentIntentCreateParams.SetupFutureUsage.OFF_SESSION));
+//
+//                            Map<String, String> response = new HashMap<>();
+//                            response.put("customerId", user.getStripeCustomerId());
+//                            response.put("paymentIntentId", paymentIntent.getId());
+//                            response.put("paymentIntentClientSecret", paymentIntent.getClientSecret());
+//                            response.put("status", paymentIntent.getStatus());
+//
+//
+//                            return ResponseEntity.status(HttpServletResponse.SC_PAYMENT_REQUIRED).body(response);
+//                        }
+//                    }
+//                } catch (StripeException e) {
+//                    return ResponseEntity.status(HttpServletResponse.SC_INTERNAL_SERVER_ERROR).body("Error retrieving subscription: " + e.getMessage());
+//                } catch (Exception e) {
+//                    throw new RuntimeException(e);
+//                }
+//                break;
+//            default:
+//                break;
+//        }
 
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())

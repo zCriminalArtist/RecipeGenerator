@@ -4,10 +4,9 @@ import com.matthew.RecipeGenerator.Model.Ingredient;
 import com.matthew.RecipeGenerator.Model.Recipe;
 import com.matthew.RecipeGenerator.Model.RecipeIngredient;
 import com.matthew.RecipeGenerator.Model.User;
-import com.matthew.RecipeGenerator.Service.IngredientService;
-import com.matthew.RecipeGenerator.Service.OpenAIService;
-import com.matthew.RecipeGenerator.Service.RecipeIngredientService;
-import com.matthew.RecipeGenerator.Service.RecipeService;
+import com.matthew.RecipeGenerator.Service.*;
+import com.stripe.exception.StripeException;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +25,8 @@ public class RecipeController {
     @Autowired
     private OpenAIService openAIService;
     @Autowired
+    private StripeService stripeService;
+    @Autowired
     private RecipeService recipeService;
     @Autowired
     private IngredientService ingredientService;
@@ -34,6 +35,26 @@ public class RecipeController {
 
     @GetMapping
     public ResponseEntity<?> getRecipes(@RequestParam(required = false) List<String> ingredients, @AuthenticationPrincipal(errorOnInvalidType=true) User user) {
+        String status = user.getSubscriptionStatus();
+        switch (status) {
+            case "active":
+                break;
+            case "trialing":
+                break;
+            case "past_due", "trial_expired", "canceled":
+                try {
+                    return ResponseEntity.status(HttpServletResponse.SC_PAYMENT_REQUIRED).body(stripeService.issuePaymentIntent(user));
+                } catch (StripeException e) {
+                    return ResponseEntity.status(HttpServletResponse.SC_INTERNAL_SERVER_ERROR).body("Error retrieving subscription: " + e.getMessage());
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            case "canceled_pending":
+                break;
+            default:
+                break;
+        }
+
         if (ingredients == null || ingredients.isEmpty()) {
             List<Recipe> allRecipes = recipeService.getRecipesByUser(user);
             for (Recipe recipe : allRecipes) {

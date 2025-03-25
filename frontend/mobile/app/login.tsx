@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, TextInput, StyleSheet, Text, TouchableOpacity, SafeAreaView } from 'react-native';
+import { View, TextInput, StyleSheet, Text, TouchableOpacity, SafeAreaView, Image } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -72,9 +72,10 @@ export default function LoginScreen({ setIsAuthenticated }: LoginScreenProps) {
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background} ]}>
-      <KeyboardAwareScrollView keyboardDismissMode='on-drag' contentContainerStyle={styles.scrollContainer}>
+      <KeyboardAwareScrollView scrollEnabled={false} keyboardDismissMode='on-drag' contentContainerStyle={styles.scrollContainer}>
       <View style={styles.container}>
         <View style={styles.header}>
+          <Image source={require('@/assets/images/icon.png')} style={[{ width: 80, height: 80, marginBottom: 20}]}/>
           <Text style={[styles.title, { color: theme.text }]}>
               Sign in to <Text style={{ color: theme.primary }}>Ingredi</Text>
                 <Text style={[{ color: theme.secondary, fontStyle: 'italic' }]}>Go</Text>
@@ -181,7 +182,7 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginVertical: 100,
+    marginVertical: 75,
   },
   title: {
     fontSize: 31,
@@ -238,7 +239,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textAlign: 'center',
     marginVertical: 10,
-    color: 'red',
+    color: '#f74a4a',
   },
   formAction: {
     marginTop: 4,
