@@ -6,6 +6,7 @@ import com.matthew.RecipeGenerator.Model.RecipeIngredient;
 import com.matthew.RecipeGenerator.Model.User;
 import com.matthew.RecipeGenerator.Service.*;
 import com.stripe.exception.StripeException;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -14,9 +15,13 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/recipes")
@@ -34,7 +39,7 @@ public class RecipeController {
     private RecipeIngredientService recipeIngredientService;
 
     @GetMapping
-    public ResponseEntity<?> getRecipes(@RequestParam(required = false) List<String> ingredients, @AuthenticationPrincipal(errorOnInvalidType=true) User user) {
+    public ResponseEntity<?> getRecipes(@AuthenticationPrincipal(errorOnInvalidType=true) User user, HttpServletRequest request) {
         String status = user.getSubscriptionStatus();
         switch (status) {
             case "active":
@@ -55,7 +60,8 @@ public class RecipeController {
                 break;
         }
 
-        if (ingredients == null || ingredients.isEmpty()) {
+        String rawQuery = request.getQueryString();
+        if (rawQuery == null || !rawQuery.contains("ingredients=")) {
             List<Recipe> allRecipes = recipeService.getRecipesByUser(user);
             for (Recipe recipe : allRecipes) {
                 List<RecipeIngredient> recipeIngredients = recipeIngredientService.getRecipeIngredientsByRecipeId(recipe.getId());
@@ -63,15 +69,21 @@ public class RecipeController {
             }
             return ResponseEntity.ok(allRecipes);
         } else {
+            String ingredients = rawQuery.substring(rawQuery.indexOf("ingredients=") + "ingredients=".length());
+            System.out.println(ingredients);
+            List<String> ingredientsList = Arrays.stream(ingredients.split(","))
+                    .map(ingredient -> URLDecoder.decode(ingredient, StandardCharsets.UTF_8))
+                    .collect(Collectors.toList());
             Set<Ingredient> ingredientSet = new HashSet<>();
-            for (String ingredientName : ingredients) {
+            for (String ingredientName : ingredientsList) {
+                System.out.println(ingredientName);
                 Ingredient ingredient = new Ingredient();
                 ingredient.setName(ingredientName);
                 ingredient.setCategory("");
                 ingredientSet.add(ingredientService.addIngredient(ingredient));
             }
 
-            String raw_recipe = openAIService.generateRecipe(String.join(", ", ingredients));
+            String raw_recipe = openAIService.generateRecipe(String.join(", ", ingredientsList));
             List<Recipe> recipes = openAIService.parseRecipes(raw_recipe);
             for (Recipe recipe : recipes) {
                 System.out.println(user.getUsername());

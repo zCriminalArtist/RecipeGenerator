@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, TextInput, StyleSheet, Text, FlatList, TouchableOpacity, Alert, SafeAreaView, StatusBar, useColorScheme, Keyboard, TouchableWithoutFeedback } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, TextInput, StyleSheet, Text, FlatList, TouchableOpacity, Alert, SafeAreaView, StatusBar, useColorScheme, Keyboard, TouchableWithoutFeedback, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '@/utils/api';
 import { Colors, darkTheme, lightTheme } from '@/constants/Colors';
@@ -9,6 +9,9 @@ import { jwtDecode } from 'jwt-decode';
 import ContentLoader, { Rect } from 'react-content-loader/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import axios from 'axios';
+import IngredientContainer from '@/components/ui/IngredientContainer';
+import ProfileMenu from '@/components/ui/ProfileMenu';
+import { opacity } from 'react-native-reanimated/lib/typescript/Colors';
 
 interface Recipe {
   id: number;
@@ -21,9 +24,17 @@ export default function HomeScreen() {
   const [ingredients, setIngredients] = useState<string[]>([]);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [suggestions, setSuggestions] = useState<{ id: string; name: string, brandOwner: string }[]>([]);
   const [inputValue, setInputValue] = useState<string>('');
-  const [username, setUsername] = useState<string>('JohnDoe'); // Replace with actual username retrieval logic
+  const [username, setUsername] = useState<string>('JohnDoe');
   const colorScheme = useColorScheme();
+  const usda_api_key = process.env.EXPO_PUBLIC_USDA_API_KEY || 'default_usda_api_key';
+  const scrollViewRef = useRef<ScrollView>(null);
+
+  useEffect(() => {
+    scrollViewRef.current?.scrollToEnd({ animated: true });
+  }, [ingredients]);
 
   useEffect(() => {
     const fetchUsername = async () => {
@@ -43,8 +54,11 @@ export default function HomeScreen() {
 
   const fetchRecipe = async () => {
     setIsGenerating(true);
+    setSearchTerm('');
+    Keyboard.dismiss();
     try {
-      const response = await api.get<Recipe[]>(`/recipes?ingredients=${ingredients.join(',')}`);
+      const encodedIngredients = ingredients.map(ing => encodeURIComponent(ing)).join(',');
+      const response = await api.get<Recipe[]>(`/recipes?ingredients=${encodedIngredients}`);
       setRecipes(response.data);
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 402) {
@@ -91,109 +105,157 @@ export default function HomeScreen() {
     ));
   };
 
+  const fetchIngredientSuggestions = async (query: string) => {
+    if (!query) {
+      setSuggestions([]);
+      return;
+    }
+    try {
+      const result = await axios.post(
+        `https://api.nal.usda.gov/fdc/v1/foods/search?api_key=${usda_api_key}`,
+        {
+          query,
+          dataType: ["Foundation", "Branded"],
+        }
+      );
+      const foods = result?.data?.foods ?? [];
+
+      const foundationFoods = foods.filter((food: any) => food.dataType === 'Foundation');
+      const otherFoods = foods.filter((food: any) => food.dataType !== 'Foundation');
+
+      const remainingSlots = 10 - foundationFoods.length;
+      const finalFoods = foundationFoods.slice(0, 10).concat(otherFoods.slice(0, remainingSlots));
+
+      const transformed = finalFoods.slice(0, 10).map((food: any, index: number) => {
+        const originalName = food.description.trim();
+        const displayedName =
+          originalName.charAt(0).toUpperCase() + originalName.slice(1).toLowerCase();
+        return {
+          id: index.toString(),
+          name: displayedName,
+          brandOwner: food.brandOwner || '',
+        };
+      });
+      setSuggestions(transformed);
+    } catch (error) {
+      console.error('Error fetching suggestions:', error);
+    }
+  };
+
   return (
     <MenuProvider>
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      {/* <TouchableWithoutFeedback> */}
         <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
           <StatusBar barStyle="light-content" backgroundColor={ theme.primary } />
-          <View style={[styles.header, { backgroundColor: theme.primary }]}>
+          <View style={[styles.header, { maxHeight: 250, backgroundColor: theme.primary }]}>
             <View style={styles.headerContent}>
               <Text style={styles.headerText}>Welcome, {username}</Text>
-              <Menu>
-                <MenuTrigger>
-                  <View style={styles.initialCircle}>
-                    <Text style={[styles.initialText, {color: theme.primary }]}>{username.charAt(0).toUpperCase()}</Text>
-                  </View>
-                </MenuTrigger>
-                <MenuOptions>
-                  <MenuOption onSelect={handleSignOut} customStyles={{ optionText: styles.menuOptionText }}>
-                    <View style={styles.menuOption}>
-                      <Icon name="logout" size={20} color={theme.primaryText} />
-                      <Text style={styles.menuOptionText}>Sign out</Text>
-                    </View>
-                  </MenuOption>
-                  <MenuOption
-                    onSelect={() => { 
-                      router.push('/subscription'); 
-                    }}
-                    customStyles={{ optionText: styles.menuOptionText }}>
-                    <View style={styles.menuOption}>
-                      <Icon name="loyalty" size={20} color={theme.primaryText} />
-                      <Text style={styles.menuOptionText}>Subscription</Text>
-                    </View>
-                  </MenuOption>
-                </MenuOptions>
-              </Menu>
+              <ProfileMenu
+                  username={username}
+                  onSignOut={handleSignOut}
+                  onSubscription={() => router.push('/subscription')}
+                  theme={theme}
+              />
             </View>
-            <View style={styles.ingredientContainer}>
-              {ingredients.map((ingredient, index) => (
-                <View key={index} style={styles.ingredient}>
-                  <Text style={{ padding: 8, height: '100%', borderTopLeftRadius: 4, borderBottomLeftRadius: 4, color: '#212121', fontWeight: '600', marginRight: 10, backgroundColor: '#DDDDDD'}}>{`${index + 1}. `}</Text>
-                  <Text style={{ color: '#212121'}}>{ingredient.replace(/\b\w+/g, word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())}</Text>
-                  <TouchableOpacity 
-                    onPress={() => deleteIngredient(index)}
-                    style={styles.deleteButton}
-                    activeOpacity={0.3}>
-                    <Icon name="close" size={18} color={darkTheme.secondaryText} />
-                  </TouchableOpacity>
-                </View>
-              ))}
-            </View>
+            <IngredientContainer ingredients={ingredients} deleteIngredient={deleteIngredient} theme={theme} />
           </View>
-          <View style={styles.container}>
+          <View style={[{ marginTop: 16, padding: 16, paddingTop: -16, paddingBottom: -16 }]}>
             <View style={styles.inputRow}>
               <TextInput
                 style={[styles.input, theme.input]}
                 placeholder="Enter ingredient"
                 placeholderTextColor="darkgray"
-                value={inputValue}
-                onChangeText={setInputValue}
-                onSubmitEditing={handleAddIngredient}
-                blurOnSubmit={false}
+                value={searchTerm}
+                onChangeText={(text) => {
+                  setSearchTerm(text);
+                  fetchIngredientSuggestions(text);
+                }}
               />
-              {inputValue.trim() !== '' && (
-                <TouchableOpacity style={[styles.addButton, {backgroundColor: 'transparent',} ]} onPress={handleAddIngredient}>
-                  <Icon name="add-circle" size={25} color={ theme.secondaryText } />
-                </TouchableOpacity>
-              )}
             </View>
-            <View style={styles.recipeContainer}>
-              {isGenerating ? (
+          </View>
+          {suggestions.length > 0 && searchTerm && (
+            <FlatList
+              data={suggestions}
+              keyExtractor={(item) => item.id}
+              style={{ backgroundColor: theme.suggestionsBackground, maxHeight: 250, flexGrow: 0, marginBottom: 0, width: '100%' }}
+              renderItem={({ item, index }) => {
+                const lastItem = index === suggestions.length - 1;
+                return (
+                  <TouchableOpacity
+                    onPress={() => {
+                      setIngredients([...ingredients, item.name]);
+                      setSuggestions((prev) => prev.filter((suggestion) => suggestion.id !== item.id));
+                    }}
+                    style={[
+                      styles.suggestionItem, { backgroundColor: theme.suggestionsBackground },
+                      lastItem && { borderBottomWidth: 0 }
+                    ]}
+                  >
+                    <View>
+                      <Text style={{ margin: 20, marginRight: 40, color: theme.primaryText }}>{item.name}</Text>
+                      {item.brandOwner ? (
+                        <Text style={{ marginLeft: 20, marginTop: -20, marginBottom: 15, color: theme.secondaryText }}>
+                          {item.brandOwner}
+                        </Text>
+                      ) : null}
+                      <View style={[styles.addButton, { opacity: 0.8, backgroundColor: 'transparent',} ]} >
+                        <Icon name="add-circle" size={25} color={ theme.secondaryText } />
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                );
+              }}
+            />
+          )}
+          <View style={styles.container}>
+            {isGenerating ? (
+              <View style={{ padding: 16, width: '100%' }}>
                 <ContentLoader
                   speed={1}
                   width="100%"
                   height={500}
                   backgroundColor={theme.background}
                   foregroundColor={theme.secondaryText}>
-                  <Rect x="0" y="0" rx="4" ry="4" width="100%" height="200" />
+                  <Rect x="0" y="0" rx="4" ry="4" width="100%" height="200"/>
                 </ContentLoader>
-              ) : recipes.length > 0 ? (
-                <FlatList
-                  data={recipes}
-                  keyExtractor={(item) => item.id.toString()}
-                  renderItem={({ item }) => (
-                    <View style={[styles.recipe, { backgroundColor: theme.cardBackground }]}>
-                      <Text style={[styles.recipeTitle, {color: theme.primaryText }]}>{item.name}</Text>
-                      <Text style={[ { marginBottom: 20, color: theme.primaryText }]}>{item.description}</Text>
-                      <Text style={[ { fontWeight: '600', marginBottom: 3, color: theme.primaryText }]}>Instructions</Text>
-                      {renderInstructions(item.instructions)}
-                    </View>
-                  )}
-                />
-              ) : (
-                <Text style={[{ color: theme.primaryText }]}>Add '+' ingredients to get started</Text>
-              )}
-            </View>
+              </View>
+            ) : recipes.length > 0 ? (
+              <FlatList
+                data={recipes}
+                keyExtractor={(item) => item.id.toString()}
+                renderItem={({ item }) => (
+                  <View style={[styles.recipe, { marginBottom: 120, backgroundColor: theme.cardBackground }]}>
+                    <Text style={[styles.recipeTitle, {color: theme.primaryText }]}>{item.name}</Text>
+                    <Text style={[ { marginBottom: 20, color: theme.primaryText }]}>{item.description}</Text>
+                    <Text style={[ { fontWeight: '600', marginBottom: 3, color: theme.primaryText }]}>Instructions</Text>
+                    {renderInstructions(item.instructions)}
+                  </View>
+                )}
+              />
+            ) : (
+              <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                <Text style={[{ marginTop: 20, color: theme.secondaryText }]}>Add '+' ingredients to get started</Text>
+              </TouchableWithoutFeedback>
+            )} 
           </View>
           {ingredients.length > 0 && (
-            <View style={styles.footer}>
-              <TouchableOpacity style={[ styles.generateButton, { backgroundColor: theme.primary, }]} onPress={fetchRecipe}>
-                <Text style={styles.generateButtonText}>Generate Recipe</Text>
-              </TouchableOpacity>
-            </View>
+            <KeyboardAvoidingView
+              style={styles.footer}
+              behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            >
+              <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                <TouchableOpacity style={[ styles.generateButton, { backgroundColor: theme.secondary, }]} 
+                onPress={() => {
+                  setSearchTerm('');
+                  setSuggestions([]);
+                  fetchRecipe();
+                }}>
+                  <Text style={styles.generateButtonText}>Generate Recipe</Text>
+                </TouchableOpacity>
+              </TouchableWithoutFeedback>
+            </KeyboardAvoidingView>
           )}
         </SafeAreaView>
-      </TouchableWithoutFeedback>
     </MenuProvider>
   );
 }
@@ -204,8 +266,9 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 16,
+    paddingBottom: -16,
     marginTop: -(StatusBar.currentHeight || 60),
-    paddingTop: StatusBar.currentHeight || 60, // Adjust padding to account for status bar
+    paddingTop: StatusBar.currentHeight || 60,
   },
   headerContent: {
     flexDirection: 'row',
@@ -240,12 +303,12 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    padding: 16,
+    alignItems: 'center',
   },
   ingredientContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginTop: 12,
+    paddingVertical: 20,
   },
   ingredient: {
     flexDirection: 'row',
@@ -269,6 +332,7 @@ const styles = StyleSheet.create({
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    height: 60,
   },
   input: {
     flex: 1,
@@ -283,21 +347,20 @@ const styles = StyleSheet.create({
   addButton: {
     position: 'absolute',
     alignSelf: 'center',
-    height: 60,
+    height: '100%',
     justifyContent: 'center',
-    right: 0,
+    right: 15,
     padding: 0,
   },
   recipeContainer: {
     flex: 1,
-    paddingTop: 16,
     padding: 1,
     alignItems: 'center',
   },
   recipe: {
     backgroundColor: '#f0f0f0',
     padding: 16,
-    marginBottom: 12,
+    margin: 16,
     borderRadius: 4,
   },
   recipeTitle: {
@@ -324,7 +387,7 @@ const styles = StyleSheet.create({
     bottom: 100,
     left: 0,
     right: 0,
-    padding: 16,
+    margin: 16,
     alignItems: 'center',
   },
   generateButton: {
@@ -336,5 +399,27 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  suggestionItem: {
+    width: '100%',
+    backgroundColor: '#DDD',
+    borderBottomWidth: 1,
+    borderBottomColor: '#CCC',
+  },
+  gradientTop: {
+    position: 'absolute',
+    top: 0, // match the padding of the container
+    left: 0,
+    right: 0,
+    height: 30,
+    zIndex: 1,
+  },
+  gradientBottom: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 30,
+    zIndex: 1,
   },
 });

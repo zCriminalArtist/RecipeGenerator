@@ -35,7 +35,7 @@ public class OpenAIServiceImpl implements OpenAIService {
         headers.set("Authorization", "Bearer " + apiKey);
         headers.set("Content-Type", "application/json");
 
-        String requestBody = "{ \"model\": \"gpt-4o-mini\", \"messages\": [ { \"role\": \"user\", \"content\": \"Generate a recipe using only the following ingredients: " + ingredients + ". Respond in the order of name, description, and instructions without emphasizing or italicizing the text.\"} ], \"max_completion_tokens\": 100 }";
+        String requestBody = "{ \"model\": \"gpt-4o-mini\", \"messages\": [ { \"role\": \"user\", \"content\": \"Generate a recipe using only the following ingredients: " + ingredients + ". Respond in the order of name, description, and instructions without emphasizing or italicizing the text.\"} ], \"max_completion_tokens\": 400 }";
         HttpEntity<String> entity = new HttpEntity<>(requestBody, headers);
 
         ResponseEntity<String> response = restTemplate.exchange(apiUrl, HttpMethod.POST, entity, String.class);

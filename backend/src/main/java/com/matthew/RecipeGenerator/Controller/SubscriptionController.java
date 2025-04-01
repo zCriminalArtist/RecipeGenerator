@@ -144,7 +144,7 @@ public class SubscriptionController {
                     PaymentMethod paymentMethod = PaymentMethod.retrieve(subscription.getDefaultPaymentMethod());
                     if (paymentMethod != null) {
                         if (paymentMethod.getCard() != null) {
-                            subscriptionData.put("paymentMethod", paymentMethod.getCard().getBrand() + " **** " + paymentMethod.getCard().getLast4());
+                            subscriptionData.put("paymentMethod", paymentMethod.getCard().getBrand().substring(0, 1).toUpperCase() + paymentMethod.getCard().getBrand().substring(1).toLowerCase() + " **** " + paymentMethod.getCard().getLast4());
                         } else {
                             subscriptionData.put("paymentMethod", "Other");
                         }
@@ -152,7 +152,7 @@ public class SubscriptionController {
                         subscriptionData.put("paymentMethod", "No payment method on file");
                     }
                 } else {
-                    subscriptionData.put("paymentMethod", "No payment method on file");
+                    subscriptionData.put("paymentMethod", "No method on file");
                 }
                 BigDecimal priceDecimal = item.getPrice().getUnitAmountDecimal().movePointLeft(2);
                 String formattedPrice = String.format("$%.2f / month", priceDecimal);

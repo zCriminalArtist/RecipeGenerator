@@ -122,7 +122,7 @@ export default function TrialScreen() {
           <Text style={styles.securedText}>Secured by Apple</Text>
         </View>
 
-        <TouchableOpacity onPress={() => router.push('/login')} style={[styles.continueButton, { backgroundColor: theme.secondaryText }]}>
+        <TouchableOpacity onPress={() => router.push('/login')} style={[styles.continueButton, { backgroundColor: 'white' }]}>
           <Text style={styles.continueButtonText}>Continue</Text>
         </TouchableOpacity>
       </View>
@@ -297,7 +297,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   continueButtonText: {
-    color: 'white',
+    color: 'black',
     fontSize: 18,
     fontWeight: '600',
   },

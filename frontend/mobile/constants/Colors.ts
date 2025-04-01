@@ -33,6 +33,7 @@ export const lightTheme = {
   primaryText: '#212121',
   secondaryText: '#BDBDBD',
   cardBackground: '#fff',
+  suggestionsBackground: '#f5f5f5',
   input: {
     backgroundColor: '#fff',
     color: '#222',
@@ -48,6 +49,7 @@ export const darkTheme = {
   primaryText: '#E0E0E0',
   secondaryText: '#757575',
   cardBackground: '#202020',
+  suggestionsBackground: '#222',
   input: {
     backgroundColor: '#333',
     color: '#fff',

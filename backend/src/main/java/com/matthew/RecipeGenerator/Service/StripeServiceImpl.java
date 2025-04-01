@@ -102,7 +102,7 @@ public class StripeServiceImpl implements StripeService {
         Subscription subscription = retrieveSubscription(user.getStripeCustomerId());
         Map<String, String> response = new HashMap<>();
         if (subscription == null) {
-            createSubscription(user.getStripeCustomerId(), "price_1R0TNnLEmXBb6SRmWfHWlVzN", false);
+            createSubscription(user.getStripeCustomerId(), "price_1R7KH2LEmXBb6SRmmG03CuU3", false);
             subscription = retrieveSubscription(user.getStripeCustomerId());
             System.out.println("Subscription created");
         }

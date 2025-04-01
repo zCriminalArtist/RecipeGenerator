@@ -122,7 +122,7 @@ public class AuthController {
         try {
             Customer stripeCustomer = stripeService.createCustomer(user);
             user.setStripeCustomerId(stripeCustomer.getId());
-            Subscription subscription = stripeService.createSubscription(stripeCustomer.getId(), "price_1R0TNnLEmXBb6SRmWfHWlVzN", true);
+            Subscription subscription = stripeService.createSubscription(stripeCustomer.getId(), "price_1R7KH2LEmXBb6SRmmG03CuU3", true);
             user.setStripeSubscriptionId(subscription.getId());
             user.setSubscriptionStatus("trialing");
             userRepository.save(user);
