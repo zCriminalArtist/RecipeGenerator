@@ -11,8 +11,8 @@ const refreshToken = async () => {
     if (!refreshToken) {
       throw new Error('No refresh token available');
     }
-
-    const response = await axios.post(`${process.env.EXPO_PUBLIC_API_URL}/api/auth/refresh-token`, { token: refreshToken });
+    
+    const response = await axios.post(`${process.env.EXPO_PUBLIC_API_URL}/api/auth/refresh-token`);
     const { token, newRefreshToken } = response.data;
 
     await AsyncStorage.setItem('jwt', token);

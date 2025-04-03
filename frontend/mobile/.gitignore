@@ -12,6 +12,7 @@ expo-env.d.ts
 # Native
 *.orig.*
 *.jks
+*.pem
 *.p8
 *.p12
 *.key

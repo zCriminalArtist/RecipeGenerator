@@ -36,3 +36,8 @@ build/
 ### DOCKER ###
 docker-compose*.yml
 .docker/
+
+
+### SSL ###
+*.jks
+*.p12

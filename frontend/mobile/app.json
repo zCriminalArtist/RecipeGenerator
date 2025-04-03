@@ -12,14 +12,16 @@
       "supportsTablet": true,
       "bundleIdentifier": "me.zcriminalartist.recipegenerator",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "This app uses camera access to scan cards used for payment."
       }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "me.zcriminalartist.recipegenerator"
     },
     "web": {
       "bundler": "metro",

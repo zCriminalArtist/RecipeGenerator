@@ -16,6 +16,7 @@ pipeline {
         OPENAI_API_KEY = credentials('OPENAI-API-KEY')
         STRIPE_API_KEY = credentials('STRIPE-API-KEY')
         STRIPE_WEBHOOK_SECRET = credentials('STRIPE-WEBHOOK-SECRET')
+        SSL_KEYSTORE_PASSWORD = credentials('SSL-KEYSTORE-PASSWORD')
     }
     stages {
 		stage('Clone Repository') {
@@ -27,23 +28,27 @@ pipeline {
         stage('Build JAR') {
 			steps {
 				dir('backend') {
-					sh '''
-                    export BACKEND_URL=$EC2_IP:8080
-                    export DB_PASSWORD=$DB_PASSWORD
-                    export DB_URL=$DB_URL
-                    export DB_USERNAME=$DB_USERNAME
-                    export FRONTEND_URL=$FRONTEND_URL
-                    export JWT_EXPIRATION=$JWT_EXPIRATION
-                    export JWT_SECRET=$JWT_SECRET
-                    export MAIL_PASSWORD=$MAIL_PASSWORD
-                    export MAIL_USERNAME=$MAIL_USERNAME
-                    export OPENAI_API_KEY=$OPENAI_API_KEY
-                    export STRIPE_API_KEY=$STRIPE_API_KEY
-                    export STRIPE_WEBHOOK_SECRET=$STRIPE_WEBHOOK_SECRET
-                    export MAVEN_HOME=/opt/maven
-                    export PATH=$PATH:$MAVEN_HOME/bin
-                    mvn clean package
-                    '''
+					withCredentials([file(credentialsId: 'keystore-file', variable: 'KEYSTORE_FILE')]) {
+						sh '''
+                    	export BACKEND_URL=$EC2_IP:8080
+                    	export DB_PASSWORD=$DB_PASSWORD
+                    	export DB_URL=$DB_URL
+                    	export DB_USERNAME=$DB_USERNAME
+                    	export FRONTEND_URL=$FRONTEND_URL
+                    	export JWT_EXPIRATION=$JWT_EXPIRATION
+                    	export JWT_SECRET=$JWT_SECRET
+                    	export MAIL_PASSWORD=$MAIL_PASSWORD
+                    	export MAIL_USERNAME=$MAIL_USERNAME
+                    	export OPENAI_API_KEY=$OPENAI_API_KEY
+                    	export STRIPE_API_KEY=$STRIPE_API_KEY
+                    	export STRIPE_WEBHOOK_SECRET=$STRIPE_WEBHOOK_SECRET
+                    	export SSL_KEYSTORE_PASSWORD=$SSL_KEYSTORE_PASSWORD
+                    	export MAVEN_HOME=/opt/maven
+                    	export PATH=$PATH:$MAVEN_HOME/bin
+                    	cp $KEYSTORE_FILE src/main/resources/keystore.p12
+                    	mvn clean package -Dspring.profiles.active=prod
+                    	'''
+                    }
                 }
             }
         }
@@ -98,6 +103,8 @@ pipeline {
                         -e BACKEND_URL=$EC2_IP:8080 \\
                         -e MAIL_USERNAME=$MAIL_USERNAME \\
                         -e MAIL_PASSWORD=$MAIL_PASSWORD \\
+                        -e SSL_KEYSTORE_PASSWORD=$SSL_KEYSTORE_PASSWORD \\
+                        -e spring.profiles.active=prod \\
                         $ECR_REPO
                     '''
                 }
