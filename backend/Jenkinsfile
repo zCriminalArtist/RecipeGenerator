@@ -30,7 +30,7 @@ pipeline {
 				dir('backend') {
 					withCredentials([file(credentialsId: 'keystore-file', variable: 'KEYSTORE_FILE')]) {
 						sh '''
-                    	export BACKEND_URL=$EC2_IP:8080
+                    	export BACKEND_URL=$EC2_IP:8443
                     	export DB_PASSWORD=$DB_PASSWORD
                     	export DB_URL=$DB_URL
                     	export DB_USERNAME=$DB_USERNAME
@@ -100,7 +100,7 @@ pipeline {
                         -e STRIPE_API_KEY=$STRIPE_API_KEY \\
                         -e STRIPE_WEBHOOK_SECRET=$STRIPE_WEBHOOK_SECRET \\
                         -e FRONTEND_URL=$FRONTEND_URL \\
-                        -e BACKEND_URL=$EC2_IP:8080 \\
+                        -e BACKEND_URL=$EC2_IP:8443 \\
                         -e MAIL_USERNAME=$MAIL_USERNAME \\
                         -e MAIL_PASSWORD=$MAIL_PASSWORD \\
                         -e SSL_KEYSTORE_PASSWORD=$SSL_KEYSTORE_PASSWORD \\
