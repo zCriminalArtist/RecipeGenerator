@@ -28,7 +28,7 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
         user.setVerificationToken(token);
         userRepo.save(user);
 
-        String verificationUrl = "http://" + backendUrl + "/api/auth/verify-email?token=" + token;
+        String verificationUrl = "https://" + backendUrl + "/api/auth/verify-email?token=" + token;
 
         SimpleMailMessage mailMessage = new SimpleMailMessage();
         mailMessage.setTo(user.getEmail());

@@ -217,14 +217,15 @@ export default function HomeScreen() {
                   backgroundColor={theme.background}
                   foregroundColor={theme.secondaryText}>
                   <Rect x="0" y="0" rx="4" ry="4" width="100%" height="200"/>
+                  <Rect x="0" y="220" rx="4" ry="4" width="100%" height="200"/>
                 </ContentLoader>
               </View>
             ) : recipes.length > 0 ? (
               <FlatList
                 data={recipes}
                 keyExtractor={(item) => item.id.toString()}
-                renderItem={({ item }) => (
-                  <View style={[styles.recipe, { marginBottom: 120, backgroundColor: theme.cardBackground }]}>
+                renderItem={({ item, index }) => (
+                  <View style={[styles.recipe, { marginBottom: index === recipes.length - 1 ? 60 : 5, backgroundColor: theme.cardBackground }]}>
                     <Text style={[styles.recipeTitle, {color: theme.primaryText }]}>{item.name}</Text>
                     <Text style={[ { marginBottom: 20, color: theme.primaryText }]}>{item.description}</Text>
                     <Text style={[ { fontWeight: '600', marginBottom: 3, color: theme.primaryText }]}>Instructions</Text>
@@ -302,6 +303,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   container: {
+    paddingBottom: 50,
     flex: 1,
     alignItems: 'center',
   },

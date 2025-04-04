@@ -64,7 +64,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     textAlignVertical: 'center',
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#fDfDfD',
     padding: 0,
     margin: 4,
     borderRadius: 4,
@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
     marginLeft: 15,
     padding: 5,
     borderRadius: 4,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#fDfDfD',
   },
   gradientTop: {
     position: 'absolute',
