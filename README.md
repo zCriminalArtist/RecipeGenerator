@@ -1,8 +1,96 @@
 # Smart AI-Powered Recipe Generator
 
-The Smart AI-Powered Recipe Generator is an app where you input available ingredients, and AI generates recipes instantly. It solves the problem where people don’t know what to cook with the ingredients they have. Features include suggested recipes based on available ingredients as well as custom filters (low-calorie, high-protein, vegan, keto, etc). Future development may lead to monetization opportunities in the form of subscription-based enabled features in which users may generate grocery lists based on missing ingredients or one-click online grocery orders via Instacart/Amazon.
+<img src="https://raw.githubusercontent.com/zCriminalArtist/RecipeGenerator/main/frontend/mobile/assets/images/icon.png" width="200" height="200" align="right">
 
-## Entities
+IngrediGo is the smart AI-Powered Recipe Generator app where you input available ingredients, and AI generates recipes instantly. It solves the problem where people don’t know what to cook with the ingredients they have. Features include suggested recipes based on available ingredients as well as custom filters (low-calorie, high-protein, vegan, keto, etc). Future development may lead to monetization opportunities in the form of subscription-based enabled features in which users may generate grocery lists based on missing ingredients or one-click online grocery orders via Instacart/Amazon.
+
+## ✅ Pre-Beta Launch Checklist – IngrediGo AI Recipe App
+
+Before inviting beta testers, ensure the following checklist is complete to provide a smooth and valuable user experience.
+
+---
+
+### 📦 Core Features
+
+- [x] Ingredient input (manual + voice search + barcode scanning if applicable)
+- [x] AI recipe generation using selected ingredients
+- [x] Save recipes to user account
+- [x] View/edit saved ingredients list
+- [ ] Responsive design (mobile, tablet, desktop)
+
+---
+
+### 🧪 AI/Backend Functionality
+
+- [x] Model is trained/tested and gives relevant recipe results
+- [ ] AI handles edge cases (e.g., 1 or very few ingredients)
+- [ ] Rate limiting & timeout handling on AI calls
+- [ ] Backend API is secure and protected (e.g., rate limiting, input validation)
+- [ ] PostgreSQL database fully seeded and migrated
+
+---
+
+### 🔐 Authentication & Authorization
+
+- [x] User sign up / login (JWT or OAuth)
+- [x] Password recovery & email verification
+- [x] Stripe integration for 5-day trial + subscription handling
+
+---
+
+### 🧼 UI/UX Polish
+
+- [x] Smooth navigation flow between screens
+- [x] Intuitive onboarding tutorial / welcome modal
+- [x] Error states (empty input, server error, no recipes found)
+- [x] Loading indicators for AI responses
+- [x] Visual design is consistent with brand (colors, typography, icons)
+- [x] Mobile-first layout tested
+
+---
+
+### 🧪 QA & Testing
+
+- [ ] Unit tests (backend and frontend)
+- [ ] End-to-end test cases for core features
+- [ ] Bug/issue tracking set up (e.g., GitHub Issues or Jira)
+- [ ] Cross-browser compatibility testing (Chrome, Safari, Firefox)
+- [x] Mobile OS testing (iOS, Android)
+
+---
+
+### 🚀 Deployment & DevOps
+
+- [x] Frontend deployed (e.g., Vercel, Netlify, Expo for React Native)
+- [x] Backend deployed (e.g., Render, AWS, Heroku, Railway)
+- [x] Database securely hosted (e.g., Supabase, Neon, PlanetScale)
+- [x] CI/CD pipeline in place (e.g., GitHub Actions, Jenkins)
+- [x] Environment variables managed securely
+
+---
+
+### 📣 Beta Testing Setup
+
+- [ ] Create & invite beta tester list (email or TestFlight/Play Store)
+- [ ] Beta feedback form created (Google Forms, Typeform, etc.)
+- [ ] Documentation for testers (README, usage guide)
+- [ ] Set up user activity analytics (e.g., LogRocket, Google Analytics, Mixpanel)
+- [ ] In-app feedback option or bug report link
+
+---
+
+### 📄 Documentation
+
+- [ ] README includes project overview, features, installation, and contribution guide
+- [ ] API documentation available (Postman or Swagger)
+- [ ] Changelog created
+- [ ] License file added
+- [ ] Code of Conduct & Contributing guide included
+
+---
+
+
+## POJO Relationship Architecture
 1. **User**
 - Attributes:
   - **id**: Unique identifier for each user.
