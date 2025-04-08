@@ -40,7 +40,13 @@ export default function RecipeScreen() {
     navigation.setOptions({
       headerLargeTitle: true,
       headerTitle: () => null,
-      headerRight: () => null,
+      headerRight: () => {
+        return (
+          <TouchableOpacity onPress={() => fetchRecipes()} style={{ marginRight: 0 }}>
+            <Icon name="refresh" size={30} color={theme.primary} />
+          </TouchableOpacity>
+        );
+      },
       headerSearchBarOptions: {
         placeholder: "Search",
         visible: true,
@@ -80,32 +86,21 @@ export default function RecipeScreen() {
     setFilteredRecipes(filtered);
   };
 
-  const handleEditChange = (id: number, field: string, value: string) => {
-    setEditedIngredients((prev) => ({
-      ...prev,
-      [id]: {
-        ...prev[id],
-        [field]: value,
-      },
-    }));
-  };
-
-  const handleUpdate = async (recipeIngredientId: number) => {
-    const { quantity, unit } = editedIngredients[recipeIngredientId];
-    try {
-      await api.put(`/recipeIngredients/${recipeIngredientId}`, { quantity, unit });
-      fetchRecipes();
-    } catch (error) {
-      Alert.alert('Error', 'Error updating recipe ingredient');
-    }
-  };
-
   const handleDeleteRecipe = async (recipeId: number) => {
     try {
       await api.delete(`/recipes/${recipeId}`);
       fetchRecipes();
     } catch (error) {
       Alert.alert('Error', 'Error deleting recipe');
+    }
+  };
+
+  const handleUpdate = async (recipeIngredientId: number) => {
+    try {
+      const { quantity, unit } = editedIngredients[recipeIngredientId] ?? {};
+      await api.put(`/recipeIngredients/${recipeIngredientId}`, { quantity, unit });
+    } catch (error) {
+      Alert.alert('Error', 'Error updating recipe ingredient');
     }
   };
 
@@ -126,24 +121,70 @@ export default function RecipeScreen() {
       </TouchableOpacity>
       <Text style={[styles.recipeTitle, { color: theme.primaryText }]}>{item.name}</Text>
       <Text style={[{ marginBottom: 20, color: theme.primaryText }]}>{item.description}</Text>
-      <Text style={[{ fontWeight: '600', marginBottom: 3, color: theme.primaryText }]}>Ingredients:</Text>
+      <Text style={[{ fontWeight: '600', marginBottom: 3, color: theme.primaryText }]}>Ingredients</Text>
       {item.recipeIngredients.map((recipeIngredient) => (
         <View key={recipeIngredient.id} style={styles.ingredientContainer}>
-          <Text style={{ color: theme.primaryText }}>{recipeIngredient.ingredient.name.replace(/\b\w+/g, word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())}</Text>
+          <Text style={{ color: theme.primaryText }}>
+            {recipeIngredient.ingredient.name.replace(/\b\w+/g, word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())}
+          </Text>
           <TextInput
-            style={[styles.input, { color: theme.primaryText }]}
+            style={[
+              styles.input,
+              {
+                color: theme.primaryText,
+                backgroundColor: theme.secondaryText,
+                marginLeft: 10,
+                borderTopLeftRadius: 15,
+                borderBottomLeftRadius: 15,
+                maxWidth: Math.max(
+                  40,
+                  (editedIngredients[recipeIngredient.id]?.quantity || recipeIngredient.quantity || "").length * 20
+                ),
+              },
+            ]}
+            placeholder="Quantity"
             value={editedIngredients[recipeIngredient.id]?.quantity || recipeIngredient.quantity}
-            onChangeText={(value) => handleEditChange(recipeIngredient.id, 'quantity', value)}
+            onChangeText={(text) =>
+              setEditedIngredients((prev) => ({
+                ...prev,
+                [recipeIngredient.id]: {
+                  quantity: text,
+                  unit: prev[recipeIngredient.id]?.unit || recipeIngredient.unit,
+                },
+              }))
+            }
           />
           <TextInput
-            style={[styles.input, { color: theme.primaryText }]}
+            style={[
+              styles.input,
+              {
+                color: theme.primaryText,
+                backgroundColor: theme.secondaryText,
+                borderTopRightRadius: 15,
+                borderBottomRightRadius: 15,
+                maxWidth: Math.max(
+                  50,
+                  (editedIngredients[recipeIngredient.id]?.unit || recipeIngredient.unit || "").length * 15
+                ),
+              },
+            ]}
             value={editedIngredients[recipeIngredient.id]?.unit || recipeIngredient.unit}
-            onChangeText={(value) => handleEditChange(recipeIngredient.id, 'unit', value)}
+            onChangeText={(text) =>
+              setEditedIngredients((prev) => ({
+                ...prev,
+                [recipeIngredient.id]: {
+                  quantity: prev[recipeIngredient.id]?.quantity || recipeIngredient.quantity,
+                  unit: text,
+                },
+              }))
+            }
           />
-          <Button title="Update" onPress={() => handleUpdate(recipeIngredient.id)} />
+          <TouchableOpacity onPress={() => handleUpdate(recipeIngredient.id)} style={{ marginLeft: 5 }}>
+            <Icon name="edit" size={20} color={theme.primaryText} />
+          </TouchableOpacity>
         </View>
       ))}
-      <Text style={[{ fontWeight: '600', marginBottom: 3, color: theme.primaryText }]}>Instructions:</Text>
+      <Text style={[{ fontWeight: '600', marginVertical: 3, color: theme.primaryText }]}>Instructions</Text>
       {renderInstructions(item.instructions)}
     </View>
   );
@@ -205,13 +246,12 @@ const styles = StyleSheet.create({
   ingredientContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginLeft: 10,
     marginBottom: 8,
   },
   input: {
-    height: 40,
-    borderColor: 'gray',
-    borderWidth: 1,
-    marginHorizontal: 8,
+    height: 25,
+    marginHorizontal: 0,
     paddingHorizontal: 8,
     flex: 1,
   },

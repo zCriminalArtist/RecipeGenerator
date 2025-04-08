@@ -16,40 +16,44 @@ const IngredientContainer: React.FC<IngredientContainerProps> = ({ ingredients, 
   const scrollViewRef = useRef<ScrollView>(null);
 
   return (
-    <View style={{ width: '100%', maxHeight: 125 }}>
-      <LinearGradient
-        colors={[`${theme.primary}FF`, `${theme.primary}00`]}
-        style={styles.gradientTop}
-      />
-      <ScrollView
-        contentContainerStyle={styles.ingredientContainer}
-        ref={scrollViewRef}
-        onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
-      >
-        {ingredients.map((ingredient, index) => {
-          const displayText = ingredient.length > 40 ? `${ingredient.substring(0, 40)}...` : ingredient;
-          return (
-            <View key={index} style={styles.ingredient}>
-              <Text style={{ padding: 8, height: '100%', borderTopLeftRadius: 4, borderBottomLeftRadius: 4, color: '#212121', fontWeight: '600', marginRight: 10, backgroundColor: '#DDDDDD'}}>
-                {`${index + 1}. `}
-              </Text>
-              <Text style={{ color: '#212121'}}>
-                {displayText.replace(/\b\w+/g, word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())}
-              </Text>
-              <TouchableOpacity 
-                onPress={() => deleteIngredient(index)}
-                style={styles.deleteButton}
-                activeOpacity={0.3}>
-                <Icon name="close" size={18} color="#888888" />
-              </TouchableOpacity>
-            </View>
-          );
-        })}
-      </ScrollView>
-      <LinearGradient
-        colors={[`${theme.primary}00`, `${theme.primary}AA`]}
-        style={styles.gradientBottom}
-      />
+    <View style={{ width: '100%', maxHeight: 125, minHeight: 20 }}>
+      { ingredients.length > 0 && (
+        <>
+        <LinearGradient
+          colors={[`${theme.primary}FF`, `${theme.primary}00`]}
+          style={styles.gradientTop}
+        />
+        <ScrollView
+          contentContainerStyle={styles.ingredientContainer}
+          ref={scrollViewRef}
+          onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
+        >
+          {ingredients.map((ingredient, index) => {
+            const displayText = ingredient.length > 40 ? `${ingredient.substring(0, 40)}...` : ingredient;
+            return (
+              <View key={index} style={styles.ingredient}>
+                <Text style={{ padding: 8, height: '100%', borderTopLeftRadius: 4, borderBottomLeftRadius: 4, color: '#212121', fontWeight: '600', marginRight: 10, backgroundColor: '#DDDDDD'}}>
+                  {`${index + 1}. `}
+                </Text>
+                <Text style={{ color: '#212121'}}>
+                  {displayText.replace(/\b\w+/g, word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())}
+                </Text>
+                <TouchableOpacity 
+                  onPress={() => deleteIngredient(index)}
+                  style={styles.deleteButton}
+                  activeOpacity={0.3}>
+                  <Icon name="close" size={18} color="#888888" />
+                </TouchableOpacity>
+              </View>
+            );
+          })}
+        </ScrollView>
+        <LinearGradient
+          colors={[`${theme.primary}00`, `${theme.primary}AA`]}
+          style={styles.gradientBottom}
+        />
+      </>
+    )}
     </View>
   );
 };

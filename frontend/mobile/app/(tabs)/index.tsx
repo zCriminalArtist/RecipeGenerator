@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, TextInput, StyleSheet, Text, FlatList, TouchableOpacity, Alert, SafeAreaView, StatusBar, useColorScheme, Keyboard, TouchableWithoutFeedback, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, TextInput, StyleSheet, Text, FlatList, TouchableOpacity, Alert, SafeAreaView, StatusBar, useColorScheme, Keyboard, TouchableWithoutFeedback, ScrollView, KeyboardAvoidingView, Platform, Image, Share} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '@/utils/api';
 import { Colors, darkTheme, lightTheme } from '@/constants/Colors';
@@ -28,6 +28,7 @@ export default function HomeScreen() {
   const [suggestions, setSuggestions] = useState<{ id: string; name: string, brandOwner: string }[]>([]);
   const [inputValue, setInputValue] = useState<string>('');
   const [username, setUsername] = useState<string>('JohnDoe');
+  const [isInputFocused, setIsInputFocused] = useState<boolean>(false);
   const colorScheme = useColorScheme();
   const usda_api_key = process.env.EXPO_PUBLIC_USDA_API_KEY || 'default_usda_api_key';
   const scrollViewRef = useRef<ScrollView>(null);
@@ -142,6 +143,16 @@ export default function HomeScreen() {
     }
   };
 
+  const placeholders = ["chicken ...", "tomato ...", "garlic ...", "onion ...", "potato ...", "carrot ...", "broccoli ...", "spinach ...", "pepper ...", "egg ..."];
+            const [placeholderIndex, setPlaceholderIndex] = useState(0);
+
+            useEffect(() => {
+              const intervalId = setInterval(() => {
+                setPlaceholderIndex((prevIndex) => (prevIndex + 1) % placeholders.length);
+              }, 3000);
+              return () => clearInterval(intervalId);
+            }, []);
+
   return (
     <MenuProvider>
       {/* <TouchableWithoutFeedback> */}
@@ -149,7 +160,9 @@ export default function HomeScreen() {
           <StatusBar barStyle="light-content" backgroundColor={ theme.primary } />
           <View style={[styles.header, { maxHeight: 250, backgroundColor: theme.primary }]}>
             <View style={styles.headerContent}>
-              <Text style={styles.headerText}>Welcome, {username}</Text>
+                <Text style={[styles.headerText, { lineHeight: 35 }]}>
+                Welcome back, {username}! {ingredients.length === 0 ? 'Ready to cook?' : ''}
+                </Text>
               <ProfileMenu
                   username={username}
                   onSignOut={handleSignOut}
@@ -160,18 +173,24 @@ export default function HomeScreen() {
             <IngredientContainer ingredients={ingredients} deleteIngredient={deleteIngredient} theme={theme} />
           </View>
           <View style={[{ marginTop: 16, padding: 16, paddingTop: -16, paddingBottom: -16 }]}>
-            <View style={styles.inputRow}>
-              <TextInput
-                style={[styles.input, theme.input]}
-                placeholder="Enter ingredient"
-                placeholderTextColor="darkgray"
-                value={searchTerm}
-                onChangeText={(text) => {
-                  setSearchTerm(text);
-                  fetchIngredientSuggestions(text);
-                }}
-              />
-            </View>
+                <View style={styles.inputRow}>
+                  <TextInput
+                  style={[
+                    styles.input,
+                    theme.input,
+                    !searchTerm && isInputFocused && { fontStyle: 'italic' },
+                  ]}
+                  placeholder={isInputFocused ? placeholders[placeholderIndex] : 'Enter ingredient'}
+                  placeholderTextColor="darkgray"
+                  value={searchTerm}
+                  onChangeText={(text) => {
+                    setSearchTerm(text);
+                    fetchIngredientSuggestions(text);
+                  }}
+                  onFocus={() => setIsInputFocused(true)}
+                  onBlur={() => setIsInputFocused(false)}
+                  />
+                </View>
           </View>
           {suggestions.length > 0 && searchTerm && (
             <FlatList
@@ -222,21 +241,38 @@ export default function HomeScreen() {
               </View>
             ) : recipes.length > 0 ? (
               <FlatList
-                data={recipes}
-                keyExtractor={(item) => item.id.toString()}
-                renderItem={({ item, index }) => (
-                  <View style={[styles.recipe, { marginBottom: index === recipes.length - 1 ? 60 : 5, backgroundColor: theme.cardBackground }]}>
-                    <Text style={[styles.recipeTitle, {color: theme.primaryText }]}>{item.name}</Text>
-                    <Text style={[ { marginBottom: 20, color: theme.primaryText }]}>{item.description}</Text>
-                    <Text style={[ { fontWeight: '600', marginBottom: 3, color: theme.primaryText }]}>Instructions</Text>
-                    {renderInstructions(item.instructions)}
-                  </View>
-                )}
+              data={recipes}
+              style={{ width: '100%'}}
+              keyExtractor={(item) => item.id.toString()}
+              renderItem={({ item, index }) => (
+                <View style={[styles.recipe, { marginBottom: index === recipes.length - 1 ? 60 : 5, backgroundColor: theme.cardBackground }]}>
+                <Text style={[styles.recipeTitle, {color: theme.primaryText }]}>{item.name}</Text>
+                <Text style={[ { marginBottom: 20, color: theme.primaryText }]}>{item.description}</Text>
+                <Text style={[ { fontWeight: '600', marginBottom: 3, color: theme.primaryText }]}>Instructions</Text>
+                {renderInstructions(item.instructions)}
+                <TouchableOpacity
+                  style={{ alignSelf: 'flex-end', marginTop: 10, padding: 5, borderRadius: 4, backgroundColor: theme.secondary }}
+                  onPress={() => {
+                  const recipeText = `Recipe: ${item.name}\n\nDescription: ${item.description}\n\nInstructions:\n${item.instructions}`;
+                  Share.share({ message: recipeText });
+                  }}
+                >
+                  <Icon name="share" size={24} color={theme.cardBackground} />
+                </TouchableOpacity>
+                </View>
+              )}
               />
-            ) : (
-              <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                <Text style={[{ marginTop: 20, color: theme.secondaryText }]}>Add '+' ingredients to get started</Text>
-              </TouchableWithoutFeedback>
+            ) : (ingredients.length == 0 && !searchTerm && (
+              <View style={{ height: '100%', paddingBottom: 300, justifyContent: 'center', alignItems: 'center' }}>
+                <Image
+                  source={require('@/assets/images/empty_bowl.png')}
+                  style={{ width: 100, height: 100, marginTop: 0, marginBottom: 0 }}
+                  resizeMode="contain"/>
+                <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                  <Text style={[{ flexWrap: 'wrap', textAlign: 'center', maxWidth: '70%', marginTop: 20, color: theme.secondaryText }]}>Your digital pantry is empty! Start by adding an ingredient</Text>
+                </TouchableWithoutFeedback>
+              </View>
+              )
             )} 
           </View>
           {ingredients.length > 0 && (
@@ -277,7 +313,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerText: {
+    maxWidth: '70%',
     fontSize: 24,
+    flexWrap: 'wrap',
     fontWeight: 'bold',
     color: 'white',
   },

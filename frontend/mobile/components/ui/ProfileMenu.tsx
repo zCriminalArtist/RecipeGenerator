@@ -18,26 +18,32 @@ interface ProfileMenuProps {
 const ProfileMenu: React.FC<ProfileMenuProps> = ({ username, onSignOut, onSubscription, theme }) => {
   return (
     <Menu>
-      <MenuTrigger>
-        <View style={styles.initialCircle}>
-          <Text style={[styles.initialText, { color: theme.primary }]}>
-            {username.charAt(0).toUpperCase()}
-          </Text>
-        </View>
+      <MenuTrigger
+      customStyles={{ triggerTouchable: { activeOpacity: 0.5, underlayColor: 'transparent' } }}
+      >
+      <View style={styles.initialCircle}>
+        <Icon name="person" size={30} color={theme.primary} />
+      </View>
       </MenuTrigger>
-      <MenuOptions customStyles={{ optionsContainer: { marginTop: 45 } }}>
-        <MenuOption onSelect={onSubscription} customStyles={{ optionText: styles.menuOptionText }}>
-          <View style={styles.menuOption}>
-            <Icon name="loyalty" size={20} color={theme.secondaryText} />
-            <Text style={[styles.menuOptionText, { color: theme.secondaryText }]}>Subscription</Text>
-          </View>
-        </MenuOption>
-        <MenuOption onSelect={onSignOut} customStyles={{ optionText: styles.menuOptionText }}>
-          <View style={styles.menuOption}>
-            <Icon name="logout" size={20} color={theme.secondaryText} />
-            <Text style={[styles.menuOptionText, { color: theme.secondaryText }]}>Sign out</Text>
-          </View>
-        </MenuOption>
+      <MenuOptions customStyles={{ optionsContainer: { padding: 5, marginTop: 45 } }}>
+      <MenuOption customStyles={{ optionText: styles.menuOptionText }}>
+        <View style={styles.menuOption}>
+        <Icon name="manage-accounts" size={20} color={theme.secondaryText} />
+        <Text style={[styles.menuOptionText, { color: theme.secondaryText }]}>Account</Text>
+        </View>
+      </MenuOption>
+      <MenuOption onSelect={onSubscription} customStyles={{ optionText: styles.menuOptionText }}>
+        <View style={styles.menuOption}>
+        <Icon name="loyalty" size={20} color={theme.secondaryText} />
+        <Text style={[styles.menuOptionText, { color: theme.secondaryText }]}>Subscription</Text>
+        </View>
+      </MenuOption>
+      <MenuOption onSelect={onSignOut} customStyles={{ optionText: styles.menuOptionText }}>
+        <View style={styles.menuOption}>
+        <Icon name="logout" size={20} color={theme.secondaryText} />
+        <Text style={[styles.menuOptionText, { color: theme.secondaryText }]}>Sign out</Text>
+        </View>
+      </MenuOption>
       </MenuOptions>
     </Menu>
   );

@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { View, TextInput, StyleSheet, Text, TouchableOpacity, SafeAreaView, Image, Animated, Easing, Dimensions } from 'react-native';
+import { View, TextInput, StyleSheet, Text, TouchableOpacity, SafeAreaView, Image, Animated, Easing, Dimensions, Modal } from 'react-native';
 import { useForm, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -11,6 +11,7 @@ import api from '@/utils/api';
 import { Colors, lightTheme, darkTheme } from '@/constants/Colors';
 import { useColorScheme } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import WebView from 'react-native-webview';
 
 interface RegisterScreenProps {
   setIsAuthenticated: (isAuthenticated: boolean) => void;
@@ -39,6 +40,8 @@ export default function RegisterScreen({ setIsAuthenticated }: RegisterScreenPro
   const router = useRouter();
   const animation = useRef(new Animated.Value(0)).current;
   const screenWidth = Dimensions.get('window').width;
+  const [flyoutVisible, setFlyoutVisible] = useState(false);
+  const webViewRef = useRef(null);
 
   const {
     control,
@@ -243,6 +246,47 @@ export default function RegisterScreen({ setIsAuthenticated }: RegisterScreenPro
               </Text>
               )}
               {errors.lastName && <Text style={styles.errorText}>{errors.lastName.message}</Text>}
+                <>
+                  <Text style={{color: theme.secondaryText, textAlign: 'center', marginTop: 16 }}>
+                    By signing up, you agree to our{' '}
+                    <Text
+                      style={{ textDecorationLine: 'underline', color: theme.primary }}
+                      onPress={() => setFlyoutVisible(true)}
+                    >
+                      Terms of Use
+                    </Text>{' '}
+                    and{' '}
+                    <Text
+                      style={{ textDecorationLine: 'underline', color: theme.primary }}
+                      onPress={() => setFlyoutVisible(true)}
+                    >
+                      Privacy Policy
+                    </Text>
+                  </Text>
+
+                  <Modal
+                    visible={flyoutVisible}
+                    style={{ margin: 0 }}
+                    presentationStyle="formSheet"
+                    hardwareAccelerated={true}
+                    onRequestClose={() => setFlyoutVisible(false)}
+                    animationType="slide"
+                  >
+                    <SafeAreaView style={{ backgroundColor: theme.background, flex: 1 }}>
+                        <TouchableOpacity 
+                          style={[styles.closeButton, { alignSelf: 'flex-end', backgroundColor: theme.cardBackground, margin: 8, opacity: 0.6 }]}
+                          onPress={() => setFlyoutVisible(false)}>
+                          <Text style={[styles.closeButtonText, {color: theme.primaryText}]}>✕</Text>
+                        </TouchableOpacity>
+                      <WebView
+                        source={{
+                          uri: 'https://ingredigo-compliancy.s3.us-east-1.amazonaws.com/terms_of_service.htm',
+                        }}
+                        style={{ backgroundColor: 'transparent', flex: 1, padding: 16 }}
+                      />
+                    </SafeAreaView>
+                  </Modal>
+                </>
             </View>
           </View>
         );
@@ -320,7 +364,7 @@ export default function RegisterScreen({ setIsAuthenticated }: RegisterScreenPro
                   </View>
                 </TouchableOpacity>
               ) : (
-
+                <>
                 <TouchableOpacity
                   onPress={handleSubmit(onSubmit)}
                   disabled={isSubmitting || !isStepValid(step)}>
@@ -328,6 +372,7 @@ export default function RegisterScreen({ setIsAuthenticated }: RegisterScreenPro
                     <Text style={styles.btnText}>{isSubmitting ? 'Signing up...' : 'Sign up'}</Text>
                   </View>
                 </TouchableOpacity>
+                </>
               )}
               {step > 1 && (
                 <TouchableOpacity
@@ -454,5 +499,16 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
     letterSpacing: 0.15,
+  },
+  closeButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  closeButtonText: {
+    fontSize: 19,
+    fontWeight: '400',
   },
 });
