@@ -31,7 +31,7 @@ public class RecipeIngredient {
     @Getter
     @Setter
     @ManyToOne // Many RecipeIngredients can belong to one Ingredient.
-    @JoinColumn(name = "ingredient_id", nullable = false)
+    @JoinColumn(name = "ingredient_id")
     private Ingredient ingredient;
 
     @Getter

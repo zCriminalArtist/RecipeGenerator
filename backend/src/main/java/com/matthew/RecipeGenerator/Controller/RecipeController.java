@@ -74,30 +74,21 @@ public class RecipeController {
             List<String> ingredientsList = Arrays.stream(ingredients.split(","))
                     .map(ingredient -> URLDecoder.decode(ingredient, StandardCharsets.UTF_8))
                     .collect(Collectors.toList());
-            Set<Ingredient> ingredientSet = new HashSet<>();
-            for (String ingredientName : ingredientsList) {
-                System.out.println(ingredientName);
-                Ingredient ingredient = new Ingredient();
-                ingredient.setName(ingredientName);
-                ingredient.setCategory("");
-                ingredientSet.add(ingredientService.addIngredient(ingredient));
-            }
+//            Set<Ingredient> ingredientSet = new HashSet<>();
+//            for (String ingredientName : ingredientsList) {
+//                System.out.println(ingredientName);
+//                Ingredient ingredient = new Ingredient();
+//                ingredient.setName(ingredientName);
+//                ingredient.setCategory("");
+//                ingredientSet.add(ingredientService.addIngredient(ingredient));
+//            }
 
-            String raw_recipe = openAIService.generateRecipe(String.join(", ", ingredientsList));
-            List<Recipe> recipes = openAIService.parseRecipes(raw_recipe);
+//            String raw_recipe = openAIService.generateRecipe(String.join(", ", ingredientsList));
+//            List<Recipe> recipes = openAIService.parseRecipes(openAIService.generateRecipe(String.join(", ", ingredientsList)));
+            List<Recipe> recipes = recipeService.createRecipesFromAIResponse(openAIService.generateRecipe(String.join(", ", ingredientsList)), user);
             for (Recipe recipe : recipes) {
-                System.out.println(user.getUsername());
                 recipe.setUser(user);
                 recipeService.addRecipe(recipe);
-
-                for (Ingredient ingredient : ingredientSet) {
-                    RecipeIngredient recipeIngredient = new RecipeIngredient();
-                    recipeIngredient.setRecipe(recipe);
-                    recipeIngredient.setIngredient(ingredient);
-                    recipeIngredient.setQuantity("1"); // Set default quantity
-                    recipeIngredient.setUnit("unit"); // Set default unit
-                    recipeIngredientService.addRecipeIngredient(recipeIngredient);
-                }
             }
             return ResponseEntity.ok(recipes);
         }
