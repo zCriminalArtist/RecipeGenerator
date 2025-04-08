@@ -52,7 +52,7 @@ public class StripeServiceImpl implements StripeService {
                 .setDescription("AI Recipe Generator Subscription");
 
         if (trial) {
-            paramsBuilder.setTrialEnd((System.currentTimeMillis() / 1000L) + 60);
+            paramsBuilder.setTrialEnd((System.currentTimeMillis() / 1000L) + 60 * 60 * 24 * 5);
         }
 
         SubscriptionCreateParams params = paramsBuilder.build();

@@ -41,7 +41,7 @@ public class OpenAIServiceImpl implements OpenAIService {
 
         String prompt = "Given these ingredients: " + ingredients
                 + ". Return a valid JSON array with up to one recipe object, containing:"
-                + " name, description, instructions, and an 'ingredients' array."
+                + " name, description, an 'instructions' array, and an 'ingredients' array."
                 + " Each 'ingredients' entry must have ingredientName, quantity (decimal) and unit (cups, grams, etc.)."
                 + " No code fences or additional text are allowed. Only the JSON array should be returned.";
 
