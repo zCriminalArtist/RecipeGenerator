@@ -62,18 +62,6 @@ public class User implements UserDetails {
     @Setter
     private String verificationToken;
 
-    @Getter
-    @Setter
-    private String stripeCustomerId;
-
-    @Getter
-    @Setter
-    private String stripeSubscriptionId;
-
-    @Getter
-    @Setter
-    private String subscriptionStatus;
-
     @UpdateTimestamp
     @Column(nullable = false)
     private ZonedDateTime userUpdatedAt;

@@ -30,8 +30,6 @@ public class RecipeController {
     @Autowired
     private OpenAIService openAIService;
     @Autowired
-    private StripeService stripeService;
-    @Autowired
     private RecipeService recipeService;
     @Autowired
     private IngredientService ingredientService;
@@ -40,25 +38,6 @@ public class RecipeController {
 
     @GetMapping
     public ResponseEntity<?> getRecipes(@AuthenticationPrincipal(errorOnInvalidType=true) User user, HttpServletRequest request) {
-        String status = user.getSubscriptionStatus();
-        switch (status) {
-            case "active":
-                break;
-            case "trialing":
-                break;
-            case "past_due", "trial_expired", "canceled":
-                try {
-                    return ResponseEntity.status(HttpServletResponse.SC_PAYMENT_REQUIRED).body(stripeService.issuePaymentIntent(user));
-                } catch (StripeException e) {
-                    return ResponseEntity.status(HttpServletResponse.SC_INTERNAL_SERVER_ERROR).body("Error retrieving subscription: " + e.getMessage());
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            case "canceled_pending":
-                break;
-            default:
-                break;
-        }
 
         String rawQuery = request.getQueryString();
         if (rawQuery == null || !rawQuery.contains("ingredients=")) {
@@ -74,17 +53,7 @@ public class RecipeController {
             List<String> ingredientsList = Arrays.stream(ingredients.split(","))
                     .map(ingredient -> URLDecoder.decode(ingredient, StandardCharsets.UTF_8))
                     .collect(Collectors.toList());
-//            Set<Ingredient> ingredientSet = new HashSet<>();
-//            for (String ingredientName : ingredientsList) {
-//                System.out.println(ingredientName);
-//                Ingredient ingredient = new Ingredient();
-//                ingredient.setName(ingredientName);
-//                ingredient.setCategory("");
-//                ingredientSet.add(ingredientService.addIngredient(ingredient));
-//            }
 
-//            String raw_recipe = openAIService.generateRecipe(String.join(", ", ingredientsList));
-//            List<Recipe> recipes = openAIService.parseRecipes(openAIService.generateRecipe(String.join(", ", ingredientsList)));
             List<Recipe> recipes = recipeService.createRecipesFromAIResponse(openAIService.generateRecipe(String.join(", ", ingredientsList)), user);
             for (Recipe recipe : recipes) {
                 recipe.setUser(user);
