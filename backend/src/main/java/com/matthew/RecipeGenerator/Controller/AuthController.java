@@ -44,7 +44,6 @@ import java.util.concurrent.Flow;
 @RequiredArgsConstructor
 public class AuthController {
     private final UserRepo userRepository;
-    private final UserSubscriptionRepo userSubscriptionRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
@@ -142,7 +141,7 @@ public class AuthController {
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String token = jwtUtil.generateToken(authentication);
 
-        if (userSubscriptionRepository.findByUserId(user.getUserId()).isEmpty()) {
+        if (user.getSubscription() == null) {
             return ResponseEntity.status(HttpServletResponse.SC_PAYMENT_REQUIRED).body(Collections.singletonMap("token", token));
         }
         return ResponseEntity.ok(Collections.singletonMap("token", token));

@@ -71,17 +71,17 @@ public class AppleNotificationServiceImpl implements AppleNotificationService {
         log.info("Processing notification type: {}, subtype: {}", type, subType);
 
         switch (type) {
-            case DID_RENEW, SUBSCRIBED -> subscription.setStatus("ACTIVE");
+            case DID_RENEW -> {
+                subscription.setStatus("ACTIVE");
+                subscription.setTrial(false);
+            }
+            case SUBSCRIBED -> subscription.setStatus("ACTIVE");
             case DID_FAIL_TO_RENEW -> subscription.setStatus("BILLING_RETRY");
             case EXPIRED, GRACE_PERIOD_EXPIRED -> subscription.setStatus("EXPIRED");
-            case DID_CHANGE_RENEWAL_STATUS -> {
-                // Only update isAutoRenew — status stays the same
-                subscription.setAutoRenew(renewalInfo.getAutoRenewStatus().getValue() == 1);
-            }
-            case DID_CHANGE_RENEWAL_PREF -> {
-                // Optional: notify user of changed productId
-                subscription.setProductId(renewalInfo.getAutoRenewProductId());
-            }
+            case DID_CHANGE_RENEWAL_STATUS -> // Only update isAutoRenew — status stays the same
+                    subscription.setAutoRenew(renewalInfo.getAutoRenewStatus().getValue() == 1);
+            case DID_CHANGE_RENEWAL_PREF -> // Optional: notify user of changed productId
+                    subscription.setProductId(renewalInfo.getAutoRenewProductId());
             case REVOKE -> subscription.setStatus("REVOKED");
             default -> log.warn("Unhandled notification type: {}", type);
         }

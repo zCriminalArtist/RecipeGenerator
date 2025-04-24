@@ -70,6 +70,9 @@ public class User implements UserDetails {
     @JsonManagedReference
     private List<Recipe> recipes;
 
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private UserSubscription subscription;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return Collections.emptyList();

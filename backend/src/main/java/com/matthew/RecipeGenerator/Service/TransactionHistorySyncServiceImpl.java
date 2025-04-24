@@ -4,17 +4,20 @@ import com.apple.itunes.storekit.client.AppStoreServerAPIClient;
 import com.apple.itunes.storekit.client.GetTransactionHistoryVersion;
 import com.apple.itunes.storekit.model.*;
 import com.apple.itunes.storekit.verification.SignedDataVerifier;
+import com.apple.itunes.storekit.verification.VerificationException;
 import com.matthew.RecipeGenerator.Model.UserSubscription;
 import com.matthew.RecipeGenerator.Repo.UserSubscriptionRepo;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -43,7 +46,6 @@ public class TransactionHistorySyncServiceImpl implements TransactionHistorySync
 
     private void syncTransactionHistory() {
         try {
-            // Fetch all subscriptions from the database
             List<UserSubscription> subscriptions = subscriptionRepository.findAll();
 
             for (UserSubscription subscription : subscriptions) {
@@ -57,8 +59,17 @@ public class TransactionHistorySyncServiceImpl implements TransactionHistorySync
                         .sort(TransactionHistoryRequest.Order.DESCENDING);
 
                 HistoryResponse response = client.getTransactionHistory(originalTransactionId, null, request, GetTransactionHistoryVersion.V2);
-                JWSTransactionDecodedPayload latestTransaction = verifier.verifyAndDecodeTransaction(response.getSignedTransactions().get(0));
-                processTransaction(latestTransaction);
+                Optional.ofNullable(response.getSignedTransactions())
+                        .filter(signedResponses -> !signedResponses.isEmpty())
+                        .ifPresentOrElse(signedResponses -> {
+                            JWSTransactionDecodedPayload latestTransaction = null;
+                            try {
+                                latestTransaction = verifier.verifyAndDecodeTransaction(signedResponses.get(0));
+                            } catch (VerificationException e) {
+                                throw new RuntimeException(e);
+                            }
+                            processTransaction(latestTransaction);
+                            }, () -> log.warn("No signed transactions found for original transaction ID: {}", originalTransactionId));
             }
         } catch (Exception e) {
             log.error("Error during transaction history sync", e);

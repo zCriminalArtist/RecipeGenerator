@@ -71,7 +71,7 @@ public class SubscriptionController {
                 ApplePendingRenewalInfo renewal = renewalMap.get(latest.getOriginalTransactionId());
                 String isInBillingRetryPeriod = renewal != null ? renewal.getIsInBillingRetryPeriod() : "0";
 
-                subscriptionService.syncAppleSubscription(user.getUserId(), latest, isInBillingRetryPeriod);
+                subscriptionService.syncAppleSubscription(user, latest, isInBillingRetryPeriod);
 
                 return ResponseEntity.ok("iOS subscription synced.");
             } else if ("android".equalsIgnoreCase(platform)) {

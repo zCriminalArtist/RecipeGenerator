@@ -38,7 +38,6 @@ public class RecipeController {
 
     @GetMapping
     public ResponseEntity<?> getRecipes(@AuthenticationPrincipal(errorOnInvalidType=true) User user, HttpServletRequest request) {
-
         String rawQuery = request.getQueryString();
         if (rawQuery == null || !rawQuery.contains("ingredients=")) {
             List<Recipe> allRecipes = recipeService.getRecipesByUser(user);
@@ -48,18 +47,24 @@ public class RecipeController {
             }
             return ResponseEntity.ok(allRecipes);
         } else {
+            String status = user.getSubscription().getStatus();
+            switch (status) {
+                case "EXPIRED" -> {
+                    return ResponseEntity.status(HttpServletResponse.SC_PAYMENT_REQUIRED).body("Subscription expired. Please renew your subscription.");
+                }
+                case "REVOKED" -> {
+                    return ResponseEntity.status(HttpServletResponse.SC_PAYMENT_REQUIRED).body("Subscription revoked. Please contact support.");
+                }
+                default -> {}
+            }
+
             String ingredients = rawQuery.substring(rawQuery.indexOf("ingredients=") + "ingredients=".length());
             System.out.println(ingredients);
             List<String> ingredientsList = Arrays.stream(ingredients.split(","))
                     .map(ingredient -> URLDecoder.decode(ingredient, StandardCharsets.UTF_8))
                     .collect(Collectors.toList());
 
-            List<Recipe> recipes = recipeService.createRecipesFromAIResponse(openAIService.generateRecipe(String.join(", ", ingredientsList)), user);
-            for (Recipe recipe : recipes) {
-                recipe.setUser(user);
-                recipeService.addRecipe(recipe);
-            }
-            return ResponseEntity.ok(recipes);
+            return ResponseEntity.ok(recipeService.createRecipesFromAIResponse(openAIService.generateRecipe(String.join(", ", ingredientsList)), user));
         }
     }
 

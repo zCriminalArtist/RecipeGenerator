@@ -16,11 +16,10 @@ public class UserSubscription {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Integer userId;
-
     private String platform; // "ios" or "android"
     private String productId;
 
+    @Column(unique = true)
     private String originalTransactionId;
     private String latestTransactionId;
 
@@ -33,4 +32,8 @@ public class UserSubscription {
     private String status;
 
     private Instant lastVerifiedAt;
+
+    @OneToOne
+    @JoinColumn(name = "user_id", referencedColumnName = "user_id", nullable = false, unique = true)
+    private User user;
 }

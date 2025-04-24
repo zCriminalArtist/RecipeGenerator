@@ -2,6 +2,7 @@ package com.matthew.RecipeGenerator.Service;
 
 import com.matthew.RecipeGenerator.Dto.AppleLatestReceiptInfo;
 import com.matthew.RecipeGenerator.Dto.GoogleSubscription;
+import com.matthew.RecipeGenerator.Model.User;
 import com.matthew.RecipeGenerator.Model.UserSubscription;
 import com.matthew.RecipeGenerator.Repo.UserSubscriptionRepo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +17,8 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     @Autowired
     private UserSubscriptionRepo subscriptionRepository;
 
-    public void syncAppleSubscription(Integer userId, AppleLatestReceiptInfo receipt, String isInBillingRetryPeriod) {
+    @Override
+    public void syncAppleSubscription(User user, AppleLatestReceiptInfo receipt, String isInBillingRetryPeriod) {
         Instant purchaseDate = Instant.ofEpochMilli(Long.parseLong(receipt.getPurchaseDateMs()));
         Instant expirationDate = Instant.ofEpochMilli(Long.parseLong(receipt.getExpiresDateMs()));
         Instant cancellationDate = receipt.getCancellationDate() != null
@@ -27,7 +29,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         Optional<UserSubscription> existing = subscriptionRepository.findByOriginalTransactionId(originalTransactionId);
         UserSubscription subscription = existing.orElseGet(UserSubscription::new);
 
-        subscription.setUserId(userId);
+        subscription.setUser(user);
         subscription.setPlatform("ios");
         subscription.setProductId(receipt.getProductId());
         subscription.setOriginalTransactionId(originalTransactionId);
@@ -43,16 +45,16 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         subscriptionRepository.save(subscription);
     }
 
-    public void syncGoogleSubscription(Integer userId, GoogleSubscription info) {
+    @Override
+    public void syncGoogleSubscription(User user, GoogleSubscription info) {
         Instant purchaseDate = Instant.ofEpochMilli(Long.parseLong(info.getStartTimeMillis()));
         Instant expirationDate = Instant.ofEpochMilli(Long.parseLong(info.getExpiryTimeMillis()));
 
-        Optional<UserSubscription> existing = subscriptionRepository
-                .findByUserIdAndPlatform(userId, "android");
+        Optional<UserSubscription> existing = subscriptionRepository.findByUserAndPlatform(user, "android");
 
         UserSubscription subscription = existing.orElseGet(UserSubscription::new);
 
-        subscription.setUserId(userId);
+        subscription.setUser(user);
         subscription.setPlatform("android");
         subscription.setProductId(info.getProductId());
         subscription.setOriginalTransactionId(info.getPurchaseToken());
