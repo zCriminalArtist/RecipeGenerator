@@ -32,24 +32,4 @@ public class WebhookController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
-
-//    @Autowired
-//    private AppleNotificationService appleNotificationService;
-//
-//    @PostMapping("/apple")
-//    public ResponseEntity<Void> handleNotification(@RequestBody String jsonString) {
-//        String signedPayload;
-//        System.out.println("Received Apple notification: " + jsonString);
-//        try {
-//            ObjectMapper objectMapper = new ObjectMapper();
-//            Map<String, Object> jsonMap = objectMapper.readValue(jsonString, Map.class);
-//            signedPayload = (String) jsonMap.get("signedPayload");
-//        } catch (Exception e) {
-//            throw new RuntimeException("Failed to extract signed payload from JSON", e);
-//        }
-//        appleNotificationService.processSignedNotification(signedPayload);
-//        System.out.println("Received Apple notification: " + signedPayload);
-//        return ResponseEntity.ok().build();
-//    }
-
 }

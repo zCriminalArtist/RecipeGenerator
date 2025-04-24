@@ -17,6 +17,10 @@ pipeline {
         STRIPE_API_KEY = credentials('STRIPE-API-KEY')
         STRIPE_WEBHOOK_SECRET = credentials('STRIPE-WEBHOOK-SECRET')
         SSL_KEYSTORE_PASSWORD = credentials('SSL-KEYSTORE-PASSWORD')
+        APPLE_SHARED_SECRET = credentials('APPLE-SHARED-SECRET')
+        APPLE_ISSUER_ID = credentials('APPLE-ISSUER-ID')
+        APPLE_KEY_ID = credentials('APPLE-KEY-ID')
+        APPLE_SUBSCRIPTION_KEY_PATH = credentials('APPLE-SUBSCRIPTION-KEY-PATH')
     }
     stages {
 		stage('Clone Repository') {
@@ -28,12 +32,14 @@ pipeline {
         stage('Build JAR') {
 			steps {
 				dir('backend') {
-					withCredentials([file(credentialsId: 'keystore-file', variable: 'KEYSTORE_FILE')]) {
+					withCredentials([file(credentialsId: 'keystore-file', variable: 'KEYSTORE_FILE'), file(credentialsId: 'apple-subscription-key-file', variable: 'APPLE_SUBSCRIPTION_KEY_FILE')]) {
 						sh '''
 						chmod 777 $KEYSTORE_FILE
+						chmod 777 $APPLE_SUBSCRIPTION_KEY_FILE
                     	chmod 777 src/main/resources
 						'''
 						sh "cp -f \"${KEYSTORE_FILE}\" \"src/main/resources/keystore.p12\""
+						sh "cp -f \"${APPLE_SUBSCRIPTION_KEY_FILE}\" \"{APPLE_SUBSCRIPTION_KEY_PATH}\""
 						sh '''
                     	export BACKEND_URL=ingredigo.net:8443
                     	export DB_PASSWORD=$DB_PASSWORD
@@ -47,6 +53,10 @@ pipeline {
                     	export OPENAI_API_KEY=$OPENAI_API_KEY
                     	export STRIPE_API_KEY=$STRIPE_API_KEY
                     	export STRIPE_WEBHOOK_SECRET=$STRIPE_WEBHOOK_SECRET
+                    	export APPLE_SHARED_SECRET=$APPLE_SHARED_SECRET
+                    	export APPLE_ISSUER_ID=$APPLE_ISSUER_ID
+                    	export APPLE_KEY_ID=$APPLE_KEY_ID
+                    	export APPLE_SUBSCRIPTION_KEY_PATH=$APPLE_SUBSCRIPTION_KEY_PATH
                     	export SSL_KEYSTORE_PASSWORD=$SSL_KEYSTORE_PASSWORD
                     	export MAVEN_HOME=/opt/maven
                     	export PATH=$PATH:$MAVEN_HOME/bin
@@ -108,6 +118,10 @@ pipeline {
                         -e MAIL_USERNAME=$MAIL_USERNAME \\
                         -e MAIL_PASSWORD=$MAIL_PASSWORD \\
                         -e SSL_KEYSTORE_PASSWORD=$SSL_KEYSTORE_PASSWORD \\
+                        -e APPLE_SHARED_SECRET=$APPLE_SHARED_SECRET \\
+                        -e APPLE_ISSUER_ID=$APPLE_ISSUER_ID \\
+                        -e APPLE_KEY_ID=$APPLE_KEY_ID \\
+                        -e APPLE_SUBSCRIPTION_KEY_PATH=$APPLE_SUBSCRIPTION_KEY_PATH \\
                         -e spring.profiles.active=prod \\
                         $ECR_REPO
                     '''

@@ -41,3 +41,4 @@ docker-compose*.yml
 ### SSL ###
 *.jks
 *.p12
+*.p8

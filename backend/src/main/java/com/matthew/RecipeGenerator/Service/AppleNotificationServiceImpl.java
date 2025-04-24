@@ -59,7 +59,8 @@ public class AppleNotificationServiceImpl implements AppleNotificationService {
 
         subscription.setOriginalTransactionId(originalTransactionId);
         subscription.setProductId(transaction.getProductId());
-        subscription.setExpirationDate(Instant.ofEpochSecond(transaction.getExpiresDate()));
+        subscription.setLastVerifiedAt(Instant.now());
+        subscription.setExpirationDate(Instant.ofEpochMilli(transaction.getExpiresDate()));
 
         if (renewalInfo != null) {
             subscription.setAutoRenew(renewalInfo.getAutoRenewStatus().getValue() == 1);
