@@ -17,6 +17,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 @Configuration
@@ -41,7 +42,7 @@ public class AppleTransactionHistoryConfig {
     public AppStoreServerAPIClient appStoreServerAPIClient() {
         String encodedKey = null;
         try {
-            encodedKey = Files.readString(Path.of(subscriptionKeyPath));
+            encodedKey = new String(Objects.requireNonNull(getClass().getClassLoader().getResourceAsStream(subscriptionKeyPath)).readAllBytes());
         } catch (Exception e) {
             throw new RuntimeException("Failed to read the private key file", e);
         }

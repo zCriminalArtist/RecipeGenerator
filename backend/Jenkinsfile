@@ -36,10 +36,12 @@ pipeline {
 						sh '''
 						chmod 777 $KEYSTORE_FILE
 						chmod 777 $APPLE_SUBSCRIPTION_KEY_FILE
+						mkdir -p src/main/resources/certs
                     	chmod 777 src/main/resources
+                    	chmod 777 src/main/resources/certs
 						'''
 						sh "cp -f \"${KEYSTORE_FILE}\" \"src/main/resources/keystore.p12\""
-						sh "cp -f \"${APPLE_SUBSCRIPTION_KEY_FILE}\" \"{APPLE_SUBSCRIPTION_KEY_PATH}\""
+						sh "cp -f \"${APPLE_SUBSCRIPTION_KEY_FILE}\"  \"${APPLE_SUBSCRIPTION_KEY_PATH}\""
 						sh '''
                     	export BACKEND_URL=ingredigo.net:8443
                     	export DB_PASSWORD=$DB_PASSWORD
