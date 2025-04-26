@@ -1,5 +1,5 @@
-import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const api = axios.create({
   baseURL: process.env.EXPO_PUBLIC_API_URL,
@@ -7,27 +7,28 @@ const api = axios.create({
 
 const refreshToken = async () => {
   try {
-    const refreshToken = await AsyncStorage.getItem('refreshToken');
+    const refreshToken = await AsyncStorage.getItem("refreshToken");
     if (!refreshToken) {
-      throw new Error('No refresh token available');
+      throw new Error("No refresh token available");
     }
-    
-    const response = await axios.post(`${process.env.EXPO_PUBLIC_API_URL}/api/auth/refresh-token`);
+
+    const response = await axios.post(
+      `${process.env.EXPO_PUBLIC_API_URL}/api/auth/refresh-token`
+    );
     const { token, newRefreshToken } = response.data;
 
-    await AsyncStorage.setItem('jwt', token);
-    await AsyncStorage.setItem('refreshToken', newRefreshToken);
+    await AsyncStorage.setItem("jwt", token);
+    await AsyncStorage.setItem("refreshToken", newRefreshToken);
 
     return token;
   } catch (error) {
-    throw new Error('Failed to refresh token');
+    throw new Error("Failed to refresh token");
   }
 };
 
-// Add a request interceptor to attach the JWT token to the headers
 api.interceptors.request.use(
   async (config) => {
-    const token = await AsyncStorage.getItem('jwt');
+    const token = await AsyncStorage.getItem("jwt");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -48,20 +49,20 @@ api.interceptors.response.use(
 
     if (
       error.response.status === 401 &&
-      error.response.data.message === 'Token has expired' &&
+      error.response.data.message === "Token has expired" &&
       !originalRequest._retry
     ) {
       originalRequest._retry = true;
 
       try {
         const newToken = await refreshToken();
-        axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
-        originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
+        axios.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
+        originalRequest.headers["Authorization"] = `Bearer ${newToken}`;
         return axios(originalRequest);
       } catch (refreshError) {
         // Handle refresh token failure (e.g., redirect to login)
-        await AsyncStorage.removeItem('jwt');
-        await AsyncStorage.removeItem('refreshToken');
+        await AsyncStorage.removeItem("jwt");
+        await AsyncStorage.removeItem("refreshToken");
         // Redirect to login screen or show an error message
       }
     }

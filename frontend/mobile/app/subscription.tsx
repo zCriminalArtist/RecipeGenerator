@@ -189,8 +189,7 @@ const SubscriptionScreen: React.FC = () => {
                 ) : item.status === 'canceled_pending' ? (
                   <>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 20 }}>
-                      <Text style={[styles.label, { color: 'blue', fontWeight: '600' }]}>You can use your subscription until {item.nextPaymentDate}</Text>
-                      <Text style={[styles.label, { color: 'blue', fontWeight: '600', alignContent: 'flex-start', marginRight: 20 }]} />
+                      <Text style={[styles.label, { maxWidth: '90%', lineHeight: 30, flexWrap: 'wrap', color: theme.primaryText, fontWeight: '600' }]}>You can use your subscription until {item.nextPaymentDate}</Text>
                     </View>
                     <TouchableOpacity
                       style={[styles.actionButton, { backgroundColor: theme.cardBackground }]}

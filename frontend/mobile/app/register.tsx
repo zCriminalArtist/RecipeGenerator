@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { View, TextInput, StyleSheet, Text, TouchableOpacity, SafeAreaView, Image, Animated, Easing, Dimensions, Modal } from 'react-native';
+import { View, TextInput, StyleSheet, Text, TouchableOpacity, SafeAreaView, Image, Animated, Easing, Dimensions, Modal, Alert } from 'react-native';
 import { useForm, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -62,7 +62,8 @@ export default function RegisterScreen({ setIsAuthenticated }: RegisterScreenPro
     try {
       const response = await api.post("/api/auth/register", data);
       if (response.status === 200) {
-        router.push('/trial');
+        Alert.alert('Success', response.data);
+        router.push('/login');
         setError(null);
       }
     } catch (err) {
@@ -315,7 +316,20 @@ export default function RegisterScreen({ setIsAuthenticated }: RegisterScreenPro
       <KeyboardAwareScrollView scrollEnabled={false} keyboardDismissMode='on-drag' contentContainerStyle={styles.scrollContainer}>
         <View style={styles.container}>
           <View style={styles.header}>
-            <Image source={require('@/assets/images/icon.png')} style={[{ width: 80, height: 80, marginBottom: 20}]}/>
+            <Image
+                source={require('@/assets/images/icon.png')}
+                style={[
+                  {
+              width: 100,
+              height: 100,
+              padding: 10,
+              shadowColor: theme.primaryText,
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.25,
+              shadowRadius: 5,
+                  }
+                ]}
+              />
             <Text style={[styles.title, { color: theme.text }]}>
               Sign up for <Text style={{ color: theme.primary }}>Ingredi</Text>
                 <Text style={{ color: theme.secondary, fontStyle: 'italic' }}>Go</Text>
@@ -368,7 +382,7 @@ export default function RegisterScreen({ setIsAuthenticated }: RegisterScreenPro
                 <TouchableOpacity
                   onPress={handleSubmit(onSubmit)}
                   disabled={isSubmitting || !isStepValid(step)}>
-                  <View style={[ styles.btn, { backgroundColor: theme.primary, borderColor: theme.primary, }]}>
+                  <View style={[ styles.btn, { backgroundColor: theme.primary, borderColor: theme.primary, opacity: (isSubmitting || !isStepValid(step)) ? 0.5 : 1 }]}>
                     <Text style={styles.btnText}>{isSubmitting ? 'Signing up...' : 'Sign up'}</Text>
                   </View>
                 </TouchableOpacity>

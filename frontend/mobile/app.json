@@ -13,7 +13,8 @@
       "bundleIdentifier": "me.zcriminalartist.recipegenerator",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "NSCameraUsageDescription": "This app uses camera access to scan cards used for payment."
+        "NSCameraUsageDescription": "This app uses camera access to scan cards used for payment.",
+        "NSInAppPurchaseUsageDescription": "This app uses in-app purchases to provide premium features."
       }
     },
     "android": {

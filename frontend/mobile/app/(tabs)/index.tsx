@@ -97,7 +97,7 @@ export default function HomeScreen() {
   const theme = colorScheme === 'dark' ? darkTheme : lightTheme;
 
   const renderInstructions = (instructions: string) => {
-    const steps = instructions.split(/\d+\.\s/).filter(step => step.trim() !== '');
+    const steps = instructions.split(/(?:\d+\.\s|\n)/).filter(step => step.trim() !== '');
     return steps.map((step, index) => (
       <View key={index} style={styles.instructionStep}>
         <Text style={[styles.instructionNumber, { color: theme.primaryText }]}>{`${index + 1}.`}</Text>
@@ -143,13 +143,13 @@ export default function HomeScreen() {
     }
   };
 
-  const placeholders = ["chicken ...", "tomato ...", "garlic ...", "onion ...", "potato ...", "carrot ...", "broccoli ...", "spinach ...", "pepper ...", "egg ..."];
+  const placeholders = ["chicken", "tomato", "garlic", "onion", "potato", "carrot", "broccoli", "spinach", "pepper", "egg"];
             const [placeholderIndex, setPlaceholderIndex] = useState(0);
 
             useEffect(() => {
               const intervalId = setInterval(() => {
                 setPlaceholderIndex((prevIndex) => (prevIndex + 1) % placeholders.length);
-              }, 3000);
+              }, 7000);
               return () => clearInterval(intervalId);
             }, []);
 
@@ -176,16 +176,17 @@ export default function HomeScreen() {
                 <View style={styles.inputRow}>
                   <TextInput
                   style={[
-                    styles.input,
-                    theme.input,
-                    !searchTerm && isInputFocused && { fontStyle: 'italic' },
+                  styles.input,
+                  theme.input,
+                  !searchTerm && isInputFocused && { fontStyle: 'italic' },
+                  { shadowColor: theme.primaryText, shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.1, shadowRadius: 10, elevation: 1 },
                   ]}
                   placeholder={isInputFocused ? placeholders[placeholderIndex] : 'Enter ingredient'}
                   placeholderTextColor="darkgray"
                   value={searchTerm}
                   onChangeText={(text) => {
-                    setSearchTerm(text);
-                    fetchIngredientSuggestions(text);
+                  setSearchTerm(text);
+                  fetchIngredientSuggestions(text);
                   }}
                   onFocus={() => setIsInputFocused(true)}
                   onBlur={() => setIsInputFocused(false)}
@@ -196,7 +197,9 @@ export default function HomeScreen() {
             <FlatList
               data={suggestions}
               keyExtractor={(item) => item.id}
-              style={{ backgroundColor: theme.suggestionsBackground, maxHeight: 250, flexGrow: 0, marginBottom: 0, width: '100%' }}
+              style={{ backgroundColor: theme.suggestionsBackground, maxHeight: 250, flexGrow: 0, marginBottom: 0, width: '100%',
+                shadowColor: theme.primaryText, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 10, elevation: 1 }
+               }
               renderItem={({ item, index }) => {
                 const lastItem = index === suggestions.length - 1;
                 return (
@@ -269,25 +272,35 @@ export default function HomeScreen() {
                   style={{ width: 100, height: 100, marginTop: 0, marginBottom: 0 }}
                   resizeMode="contain"/>
                 <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                  <Text style={[{ flexWrap: 'wrap', textAlign: 'center', maxWidth: '70%', marginTop: 20, color: theme.secondaryText }]}>Your digital pantry is empty! Start by adding an ingredient</Text>
+                  <Text style={[{ flexWrap: 'wrap', textAlign: 'center', maxWidth: '70%', marginTop: 20, color: theme.primaryText, opacity: 0.5 }]}>Your digital pantry is empty! Start by adding an ingredient</Text>
                 </TouchableWithoutFeedback>
               </View>
               )
             )} 
           </View>
-          {ingredients.length > 0 && (
+          {ingredients.length > 1 && (
             <KeyboardAvoidingView
               style={styles.footer}
               behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             >
               <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                <TouchableOpacity style={[ styles.generateButton, { backgroundColor: theme.secondary, }]} 
+                <TouchableOpacity style={[ styles.generateButton, 
+                { backgroundColor: theme.secondary,
+                  shadowColor: theme.primaryText,
+                  shadowOffset: { width: 0, height: 2 }, 
+                  shadowOpacity: 0.1,
+                  shadowRadius: 10,
+                  elevation: 1,
+                  opacity: (isGenerating) ? 0.5 : 1
+                } ]} 
+                disabled={isGenerating}
+                activeOpacity={0.5}
                 onPress={() => {
                   setSearchTerm('');
                   setSuggestions([]);
                   fetchRecipe();
                 }}>
-                  <Text style={styles.generateButtonText}>Generate Recipe</Text>
+                  <Text style={styles.generateButtonText}>{isGenerating ? "Generating..." : "Generate Recipe"}</Text>
                 </TouchableOpacity>
               </TouchableWithoutFeedback>
             </KeyboardAvoidingView>
@@ -434,9 +447,11 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 32,
     borderRadius: 24,
+    width: 225,
   },
   generateButtonText: {
     color: 'white',
+    textAlign: 'center',
     fontSize: 18,
     fontWeight: 'bold',
   },

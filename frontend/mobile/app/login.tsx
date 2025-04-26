@@ -1,16 +1,24 @@
-import React, { useState } from 'react';
-import { View, TextInput, StyleSheet, Text, TouchableOpacity, SafeAreaView, Image } from 'react-native';
-import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Link, useRouter } from 'expo-router';
-import { useColorScheme } from 'react-native';
-import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import api from '@/utils/api';
-import { Colors, lightTheme, darkTheme } from '@/constants/Colors';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import React, { useState } from "react";
+import {
+  View,
+  TextInput,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  SafeAreaView,
+  Image,
+} from "react-native";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Link, useRouter } from "expo-router";
+import { useColorScheme } from "react-native";
+import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import api from "@/utils/api";
+import { Colors, lightTheme, darkTheme } from "@/constants/Colors";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import Icon from "react-native-vector-icons/MaterialIcons";
 
 interface LoginScreenProps {
   setIsAuthenticated: (isAuthenticated: boolean) => void;
@@ -18,8 +26,8 @@ interface LoginScreenProps {
 
 // Define the login form schema using Zod
 const loginSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters long'),
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters long"),
 });
 
 // TypeScript type for form data
@@ -44,11 +52,11 @@ export default function LoginScreen({ setIsAuthenticated }: LoginScreenProps) {
 
       if (response.status === 200) {
         const { token } = response.data;
-        await AsyncStorage.setItem('jwt', token);
+        await AsyncStorage.setItem("jwt", token);
         if (setIsAuthenticated) {
           setIsAuthenticated(true);
         } else {
-          router.push('/');
+          router.push("/");
         }
         setError(null);
       }
@@ -56,111 +64,180 @@ export default function LoginScreen({ setIsAuthenticated }: LoginScreenProps) {
       if (axios.isAxiosError(err) && err.response?.status === 401) {
         setError(err.response.data);
       } else if (axios.isAxiosError(err) && err.response?.status === 402) {
-        const { customerId, paymentIntentClientSecret } = err.response.data;
-        router.push({
-          pathname: '/trial-ended',
-          params: { id: customerId, paymentIntent: paymentIntentClientSecret },
-        });
+        const { token } = err.response?.data;
+        console.log("Token:", token);
+        router.push({ pathname: "/trial", params: { token } });
       } else {
-        setError('An error occurred. Please try again later.');
+        setError("An error occurred. Please try again later.");
         console.error(err);
       }
     }
   };
 
-  const theme = colorScheme === 'dark' ? darkTheme : lightTheme;
+  const theme = colorScheme === "dark" ? darkTheme : lightTheme;
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background} ]}>
-      <KeyboardAwareScrollView scrollEnabled={false} keyboardDismissMode='on-drag' contentContainerStyle={styles.scrollContainer}>
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <Image source={require('@/assets/images/icon.png')} style={[{ width: 80, height: 80, marginBottom: 20}]}/>
-          <Text style={[styles.title, { color: theme.text }]}>
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: theme.background }]}
+    >
+      <KeyboardAwareScrollView
+        scrollEnabled={false}
+        keyboardDismissMode="on-drag"
+        contentContainerStyle={styles.scrollContainer}
+      >
+        <View style={styles.container}>
+          <View style={styles.header}>
+            <Image
+              source={require("@/assets/images/icon.png")}
+              style={[
+                {
+                  width: 100,
+                  height: 100,
+                  padding: 10,
+                  shadowColor: theme.primaryText,
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.25,
+                  shadowRadius: 5,
+                },
+              ]}
+            />
+            <Text style={[styles.title, { color: theme.text }]}>
               Sign in to <Text style={{ color: theme.primary }}>Ingredi</Text>
-                <Text style={[{ color: theme.secondary, fontStyle: 'italic' }]}>Go</Text>
-          </Text>
-          <Text style={[styles.subtitle, { color: theme.text }]}>
+              <Text style={[{ color: theme.secondary, fontStyle: "italic" }]}>
+                Go
+              </Text>
+            </Text>
+            <Text style={[styles.subtitle, { color: theme.text }]}>
               Get access to recipes and more
-          </Text>
-        </View>
-
-        <View style={styles.form}>
-          {error && <Text style={styles.errorText}>{error}</Text>}
-          <View style={styles.inputContainer}>
-            <Text style={[styles.inputLabel,{ color: theme.text }]}>
-              <Icon name="email" size={15} color={theme.text} /> Email
             </Text>
-            <Controller
-              control={control}
-              name="email"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <TextInput
-                  style={[styles.input, theme.input]}
-                  placeholder="john@example.com"
-                  placeholderTextColor="darkgray"
-                  onBlur={onBlur}
-                  onChangeText={onChange}
-                  value={value}
-                />
-              )}
-            />
-            {errors.email && <Text style={styles.errorText}>{errors.email.message}</Text>}
           </View>
 
-          <View style={styles.inputContainer}>
-            <Text style={[styles.inputLabel, { color: theme.text }]}>
-              <Icon name="vpn-key" size={15} color={theme.text} /> Password
-            </Text>
-            <Controller
-              control={control}
-              name="password"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <TextInput
-                  style={[styles.input, theme.input]}
-                  placeholder="********"
-                  placeholderTextColor="darkgray"
-                  secureTextEntry
-                  onBlur={onBlur}
-                  onChangeText={onChange}
-                  value={value}
-                />
+          <View style={styles.form}>
+            {error && <Text style={styles.errorText}>{error}</Text>}
+            <View style={styles.inputContainer}>
+              <Text style={[styles.inputLabel, { color: theme.text }]}>
+                <Icon name="email" size={15} color={theme.text} /> Email
+              </Text>
+              <Controller
+                control={control}
+                name="email"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <TextInput
+                    style={[styles.input, theme.input]}
+                    placeholder="john@example.com"
+                    placeholderTextColor="darkgray"
+                    onBlur={onBlur}
+                    onChangeText={onChange}
+                    value={value}
+                  />
+                )}
+              />
+              {errors.email && (
+                <Text style={styles.errorText}>{errors.email.message}</Text>
               )}
-            />
-            {errors.password && <Text style={styles.errorText}>{errors.password.message}</Text>}
-          </View>
-          
-          <View style={styles.formAction}>
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Text style={[styles.inputLabel, { color: theme.text }]}>
+                <Icon name="vpn-key" size={15} color={theme.text} /> Password
+              </Text>
+              <Controller
+                control={control}
+                name="password"
+                render={({ field: { onChange, onBlur, value } }) => {
+                  const [isPasswordVisible, setPasswordVisible] =
+                    useState(false);
+                  return (
+                    <View
+                      style={{ flexDirection: "row", alignItems: "center" }}
+                    >
+                      <TextInput
+                        style={[styles.input, theme.input, { flex: 1 }]}
+                        placeholder="********"
+                        placeholderTextColor="darkgray"
+                        secureTextEntry={!isPasswordVisible}
+                        onBlur={onBlur}
+                        onChangeText={onChange}
+                        value={value}
+                      />
+                      {value && (
+                        <TouchableOpacity
+                          onPress={() => setPasswordVisible(!isPasswordVisible)}
+                          style={{ position: "absolute", right: 0 }}
+                          activeOpacity={0.7}
+                        >
+                          <Icon
+                            name={
+                              isPasswordVisible
+                                ? "visibility"
+                                : "visibility-off"
+                            }
+                            size={20}
+                            color={theme.text}
+                          />
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  );
+                }}
+              />
+              {errors.password && (
+                <Text style={styles.errorText}>{errors.password.message}</Text>
+              )}
+            </View>
+
+            <View style={styles.formAction}>
+              <TouchableOpacity
+                onPress={handleSubmit(onSubmit)}
+                disabled={isSubmitting}
+              >
+                <View
+                  style={[
+                    styles.btn,
+                    {
+                      backgroundColor: theme.primary,
+                      borderColor: theme.primary,
+                      shadowColor: theme.primaryText,
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.25,
+                      shadowRadius: 5,
+                      elevation: 5, // For Android shadow
+                    },
+                  ]}
+                >
+                  <Text style={styles.btnText}>
+                    {isSubmitting ? "Signing in..." : "Sign in"}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            </View>
             <TouchableOpacity
-              onPress={handleSubmit(onSubmit)}
-              disabled={isSubmitting}>
-              <View style={[ styles.btn, { backgroundColor: theme.primary, borderColor: theme.primary, }]} >
-                <Text style={styles.btnText}>{isSubmitting ? 'Signing in...' : 'Sign in'}</Text>
-              </View>
+              onPress={() => {
+                router.push("/forgot");
+              }}
+            >
+              <Text style={[styles.formLink, { color: theme.primary }]}>
+                Forgot password?
+              </Text>
             </TouchableOpacity>
           </View>
-          <TouchableOpacity
-            onPress={() => {
-              router.push('/forgot');
-            }}>
-            <Text style={[ styles.formLink, { color: theme.primary }]}>Forgot password?</Text>
-          </TouchableOpacity>
-        
+          <View>
+            <TouchableOpacity
+              onPress={() => {
+                router.push("/register");
+              }}
+            >
+              <Text style={[styles.formFooter, { color: theme.text }]}>
+                Don't have an account?{" "}
+                <Link href="/register">
+                  <Text style={{ textDecorationLine: "underline" }}>
+                    Sign up
+                  </Text>
+                </Link>
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
-        <View>
-          <TouchableOpacity
-            onPress={() => {
-              router.push('/register');
-          }}>
-            <Text style={[styles.formFooter, { color: theme.text }]}>
-              Don't have an account?{' '}
-              <Link href="/register">
-                <Text style={{ textDecorationLine: 'underline' }}>Sign up</Text>
-              </Link>
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
       </KeyboardAwareScrollView>
     </SafeAreaView>
   );
@@ -180,18 +257,18 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   header: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginVertical: 75,
   },
   title: {
     fontSize: 31,
-    fontWeight: '700',
+    fontWeight: "700",
     marginBottom: 6,
   },
   subtitle: {
     fontSize: 15,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   form: {
     flexGrow: 1,
@@ -200,28 +277,28 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     marginBottom: 12,
-    width: '100%',
+    width: "100%",
   },
   inputLabel: {
     fontSize: 17,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: 8,
   },
   input: {
     height: 60,
-    width: '150%',
+    width: "150%",
     marginHorizontal: -25, // Offset the container padding
     paddingHorizontal: 16,
     fontSize: 15,
-    fontWeight: '500',
+    fontWeight: "500",
     borderWidth: 1,
-    borderStyle: 'solid',
+    borderStyle: "solid",
   },
   btn: {
     marginTop: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     borderRadius: 30,
     paddingVertical: 10,
     paddingHorizontal: 20,
@@ -230,16 +307,16 @@ const styles = StyleSheet.create({
   btnText: {
     fontSize: 18,
     lineHeight: 26,
-    fontWeight: '600',
-    color: '#fff',
+    fontWeight: "600",
+    color: "#fff",
   },
   errorText: {
     fontSize: 15,
     lineHeight: 22,
-    fontWeight: '500',
-    textAlign: 'center',
+    fontWeight: "500",
+    textAlign: "center",
     marginVertical: 10,
-    color: '#f74a4a',
+    color: "#f74a4a",
   },
   formAction: {
     marginTop: 4,
@@ -247,25 +324,25 @@ const styles = StyleSheet.create({
   },
   formLink: {
     fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
+    fontWeight: "600",
+    textAlign: "center",
   },
   linkText: {
-    color: 'blue',
+    color: "blue",
     marginTop: 16,
-    textAlign: 'center',
+    textAlign: "center",
   },
   formFooter: {
     paddingVertical: 24,
     fontSize: 15,
-    fontWeight: '600',
-    textAlign: 'center',
+    fontWeight: "600",
+    textAlign: "center",
     letterSpacing: 0.15,
   },
   lightText: {
-    color: '#1D2A32',
+    color: "#1D2A32",
   },
   darkText: {
-    color: '#fff',
+    color: "#fff",
   },
 });

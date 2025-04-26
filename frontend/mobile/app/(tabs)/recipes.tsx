@@ -105,7 +105,7 @@ export default function RecipeScreen() {
   };
 
   const renderInstructions = (instructions: string) => {
-    const steps = instructions.split(/\d+\.\s/).filter(step => step.trim() !== '');
+    const steps = instructions.split(/(?:\d+\.\s|\n)/).filter(step => step.trim() !== '');
     return steps.map((step, index) => (
       <View key={index} style={styles.instructionStep}>
         <Text style={[styles.instructionNumber, { color: theme.primaryText }]}>{`${index + 1}.`}</Text>
@@ -121,70 +121,71 @@ export default function RecipeScreen() {
       </TouchableOpacity>
       <Text style={[styles.recipeTitle, { color: theme.primaryText }]}>{item.name}</Text>
       <Text style={[{ marginBottom: 20, color: theme.primaryText }]}>{item.description}</Text>
-      <Text style={[{ fontWeight: '600', marginBottom: 3, color: theme.primaryText }]}>Ingredients</Text>
+      <Text style={[{ fontWeight: '600', marginBottom: 8, color: theme.primaryText }]}>Ingredients</Text>
       {item.recipeIngredients.map((recipeIngredient) => (
         <View key={recipeIngredient.id} style={styles.ingredientContainer}>
-          <Text style={{ color: theme.primaryText }}>
+          <Text style={{ marginVertical: 4, color: theme.primaryText }}>
             {recipeIngredient.ingredient.name.replace(/\b\w+/g, word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())}
           </Text>
-          <TextInput
+          <View style={{ position: 'absolute', flexDirection: 'row', right: 20, alignItems: 'center' }}>
+            <TextInput
             style={[
-              styles.input,
               {
-                color: theme.primaryText,
-                backgroundColor: theme.secondaryText,
-                marginLeft: 10,
-                borderTopLeftRadius: 15,
-                borderBottomLeftRadius: 15,
-                maxWidth: Math.max(
-                  40,
-                  (editedIngredients[recipeIngredient.id]?.quantity || recipeIngredient.quantity || "").length * 20
-                ),
+              color: theme.primaryText,
+              backgroundColor: theme.secondaryText,
+              marginLeft: 10,
+              borderTopLeftRadius: 15,
+              borderBottomLeftRadius: 15,
+              paddingLeft: 8,
+              paddingVertical: 4,
+              minWidth: 0,
               },
             ]}
             placeholder="Quantity"
             value={editedIngredients[recipeIngredient.id]?.quantity || recipeIngredient.quantity}
             onChangeText={(text) =>
               setEditedIngredients((prev) => ({
-                ...prev,
-                [recipeIngredient.id]: {
-                  quantity: text,
-                  unit: prev[recipeIngredient.id]?.unit || recipeIngredient.unit,
-                },
+              ...prev,
+              [recipeIngredient.id]: {
+                quantity: text,
+                unit: prev[recipeIngredient.id]?.unit || recipeIngredient.unit,
+              },
               }))
             }
-          />
-          <TextInput
+            />
+            <TextInput
             style={[
-              styles.input,
               {
-                color: theme.primaryText,
-                backgroundColor: theme.secondaryText,
-                borderTopRightRadius: 15,
-                borderBottomRightRadius: 15,
-                maxWidth: Math.max(
-                  50,
-                  (editedIngredients[recipeIngredient.id]?.unit || recipeIngredient.unit || "").length * 15
-                ),
+              color: theme.primaryText,
+              backgroundColor: theme.secondaryText,
+              borderTopRightRadius: 15,
+              borderBottomRightRadius: 15,
+              paddingRight: 8,
+              paddingHorizontal: 4,
+              paddingVertical: 4,
+              minWidth: 0,
               },
             ]}
             value={editedIngredients[recipeIngredient.id]?.unit || recipeIngredient.unit}
             onChangeText={(text) =>
               setEditedIngredients((prev) => ({
-                ...prev,
-                [recipeIngredient.id]: {
-                  quantity: prev[recipeIngredient.id]?.quantity || recipeIngredient.quantity,
-                  unit: text,
-                },
+              ...prev,
+              [recipeIngredient.id]: {
+                quantity: prev[recipeIngredient.id]?.quantity || recipeIngredient.quantity,
+                unit: text,
+              },
               }))
             }
-          />
+            />
+            {editedIngredients[recipeIngredient.id] && (
           <TouchableOpacity onPress={() => handleUpdate(recipeIngredient.id)} style={{ marginLeft: 5 }}>
-            <Icon name="edit" size={20} color={theme.primaryText} />
+            <Icon name="save" size={20} color={theme.primaryText} />
           </TouchableOpacity>
+          )}
+          </View>
         </View>
       ))}
-      <Text style={[{ fontWeight: '600', marginVertical: 3, color: theme.primaryText }]}>Instructions</Text>
+      <Text style={[{ fontWeight: '600', marginVertical: 5, marginTop: 5, color: theme.primaryText }]}>Instructions</Text>
       {renderInstructions(item.instructions)}
     </View>
   );
@@ -247,7 +248,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginLeft: 10,
-    marginBottom: 8,
+    marginBottom: 5,
   },
   input: {
     height: 25,

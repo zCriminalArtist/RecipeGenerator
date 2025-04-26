@@ -3,6 +3,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { Menu, MenuOptions, MenuOption, MenuTrigger } from 'react-native-popup-menu';
+import { Colors } from '@/constants/Colors';
 
 interface ProfileMenuProps {
   username: string;
@@ -25,23 +26,23 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({ username, onSignOut, onSubscr
         <Icon name="person" size={30} color={theme.primary} />
       </View>
       </MenuTrigger>
-      <MenuOptions customStyles={{ optionsContainer: { padding: 5, marginTop: 45 } }}>
+      <MenuOptions customStyles={{ optionsContainer: { margin: 0, marginTop: 45 } }}>
       <MenuOption customStyles={{ optionText: styles.menuOptionText }}>
         <View style={styles.menuOption}>
-        <Icon name="manage-accounts" size={20} color={theme.secondaryText} />
-        <Text style={[styles.menuOptionText, { color: theme.secondaryText }]}>Account</Text>
+        <Icon name="manage-accounts" size={20} color={Colors.light.text} />
+        <Text style={[styles.menuOptionText, { color: Colors.light.text }]}>Account</Text>
         </View>
       </MenuOption>
       <MenuOption onSelect={onSubscription} customStyles={{ optionText: styles.menuOptionText }}>
         <View style={styles.menuOption}>
-        <Icon name="loyalty" size={20} color={theme.secondaryText} />
-        <Text style={[styles.menuOptionText, { color: theme.secondaryText }]}>Subscription</Text>
+        <Icon name="loyalty" size={20} color={Colors.light.text} />
+        <Text style={[styles.menuOptionText, { color: Colors.light.text }]}>Subscription</Text>
         </View>
       </MenuOption>
       <MenuOption onSelect={onSignOut} customStyles={{ optionText: styles.menuOptionText }}>
         <View style={styles.menuOption}>
-        <Icon name="logout" size={20} color={theme.secondaryText} />
-        <Text style={[styles.menuOptionText, { color: theme.secondaryText }]}>Sign out</Text>
+        <Icon name="logout" size={20} color={ Colors.light.text} />
+        <Text style={[styles.menuOptionText, { color: Colors.light.text }]}>Sign out</Text>
         </View>
       </MenuOption>
       </MenuOptions>
@@ -65,8 +66,10 @@ const styles = StyleSheet.create({
   menuOption: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginLeft: 5,
   },
   menuOptionText: {
+    marginLeft: 10,
     margin: 10,
     fontSize: 15,
     fontWeight: '500',

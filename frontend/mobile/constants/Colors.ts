@@ -26,7 +26,7 @@ export const Colors = {
 };
 
 export const lightTheme = {
-  primary: '#81C784',
+  primary: '#4CAF50',
   secondary: '#FFB74D',
   background: '#e8ecf4',
   text: '#1d2a32',
