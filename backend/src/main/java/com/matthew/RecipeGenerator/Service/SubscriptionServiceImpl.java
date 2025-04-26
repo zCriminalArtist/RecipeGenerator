@@ -27,6 +27,12 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         String originalTransactionId = receipt.getOriginalTransactionId();
 
         Optional<UserSubscription> existing = subscriptionRepository.findByOriginalTransactionId(originalTransactionId);
+        if (existing.isPresent()) {
+            UserSubscription existingSubscription = existing.get();
+            if (existingSubscription.getUser() != null && !existingSubscription.getUser().equals(user)) {
+                throw new IllegalStateException("Original transaction ID already exists for another user");
+            }
+        }
         UserSubscription subscription = existing.orElseGet(UserSubscription::new);
 
         subscription.setUser(user);
@@ -36,7 +42,11 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         subscription.setLatestTransactionId(receipt.getTransactionId());
         subscription.setPurchaseDate(purchaseDate);
         subscription.setExpirationDate(expirationDate);
-        subscription.setStatus("ACTIVE");
+        if (Instant.now().isAfter(Instant.ofEpochMilli(Long.parseLong(receipt.getExpiresDateMs())))) {
+            subscription.setStatus("EXPIRED");
+        } else {
+            subscription.setStatus("ACTIVE");
+        }
         subscription.setCancellationDate(cancellationDate);
         subscription.setTrial("true".equals(receipt.getIsTrialPeriod()));
         subscription.setAutoRenew(!"1".equals(isInBillingRetryPeriod));

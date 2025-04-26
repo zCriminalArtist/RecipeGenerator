@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -19,9 +20,6 @@ public class AppleNotificationServiceImpl implements AppleNotificationService {
 
     @Autowired
     private SignedDataVerifier verifier;
-
-    @Autowired
-    private SubscriptionService subscriptionService;
 
     @Autowired
     private UserSubscriptionRepo subscriptionRepository;
@@ -53,9 +51,13 @@ public class AppleNotificationServiceImpl implements AppleNotificationService {
     private void handleNotification(ResponseBodyV2DecodedPayload notification, JWSTransactionDecodedPayload transaction, JWSRenewalInfoDecodedPayload renewalInfo) {
         String originalTransactionId = transaction.getOriginalTransactionId();
 
-        UserSubscription subscription = subscriptionRepository
-                .findByOriginalTransactionId(originalTransactionId)
-                .orElse(new UserSubscription());
+        Optional<UserSubscription> subscriptionOptional = subscriptionRepository
+                .findByOriginalTransactionId(originalTransactionId);
+        if (subscriptionOptional.isEmpty()) {
+            log.warn("No subscription found for original transaction ID: {}", originalTransactionId);
+            return;
+        }
+        UserSubscription subscription = subscriptionOptional.get();
 
         subscription.setOriginalTransactionId(originalTransactionId);
         subscription.setProductId(transaction.getProductId());

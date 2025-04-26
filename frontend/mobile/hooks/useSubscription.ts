@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import * as RNIap from "react-native-iap";
-import { Platform } from "react-native";
+import { Alert, Platform } from "react-native";
 import api from "@/utils/api";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
 
 const skus = Platform.select({
   ios: ["ingredigo_monthly_sub"],
@@ -43,8 +44,8 @@ export function useSubscription(token: string | string[]) {
 
   const subscribe = async () => {
     try {
-      const result = await RNIap.requestPurchase({ sku: skus[0] });
-      console.log("Purchase result", result);
+      const result = await RNIap.requestSubscription({ sku: skus[0] });
+      console.log("Purchase result: ", result);
       if (result) {
         const receipt =
           Platform.OS === "ios"
@@ -56,14 +57,34 @@ export function useSubscription(token: string | string[]) {
             : result.purchaseToken;
 
         if (receipt) {
-          const result = await verifyWithBackend(receipt, skus[0]);
-          if (result === 200) {
-            if (typeof token === "string") {
-              await AsyncStorage.setItem("jwt", token);
-            } else {
-              throw new Error("Invalid token type");
+          try {
+            const result = await verifyWithBackend(receipt, skus[0]);
+            if (result === 200) {
+              if (typeof token === "string") {
+                await AsyncStorage.setItem("jwt", token);
+              } else {
+                throw new Error("Invalid token type");
+              }
+              router.push("/");
             }
-            router.push("/");
+          } catch (error) {
+            if (axios.isAxiosError(error) && error.response?.status === 409) {
+              setError(
+                "Subscription is already associated with an existing account"
+              );
+              Alert.alert(
+                "Subscription Conflict",
+                "This subscription is already associated with another account. Please log in to that account to use this subscription.",
+                [
+                  {
+                    text: "OK",
+                    onPress: () => {
+                      router.push("/login");
+                    },
+                  },
+                ]
+              );
+            }
           }
         } else {
           throw new Error("No receipt found");

@@ -39,6 +39,23 @@ public class SubscriptionController {
     @Autowired
     private SubscriptionService subscriptionService;
 
+    @GetMapping("/status")
+    public ResponseEntity<?> getSubscriptionStatus(@AuthenticationPrincipal(errorOnInvalidType = true) User user) {
+        UserSubscription subscription = user.getSubscription();
+
+        if (subscription == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No subscription found for the user.");
+        }
+
+        Map<String, Object> response = Map.of("status", subscription.getStatus(),
+                "productId", subscription.getProductId(),
+                "expirationDate", subscription.getExpirationDate(),
+                "isAutoRenew", subscription.isAutoRenew(),
+                "isTrial", subscription.isTrial());
+
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping("/verify")
     public ResponseEntity<?> verifySubscription(@RequestBody UserSubscriptionRequest request, @AuthenticationPrincipal(errorOnInvalidType=true) User user) {
         try {
@@ -71,7 +88,11 @@ public class SubscriptionController {
                 ApplePendingRenewalInfo renewal = renewalMap.get(latest.getOriginalTransactionId());
                 String isInBillingRetryPeriod = renewal != null ? renewal.getIsInBillingRetryPeriod() : "0";
 
-                subscriptionService.syncAppleSubscription(user, latest, isInBillingRetryPeriod);
+                try {
+                    subscriptionService.syncAppleSubscription(user, latest, isInBillingRetryPeriod);
+                } catch (IllegalStateException e) {
+                    return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+                }
 
                 return ResponseEntity.ok("iOS subscription synced.");
             } else if ("android".equalsIgnoreCase(platform)) {
