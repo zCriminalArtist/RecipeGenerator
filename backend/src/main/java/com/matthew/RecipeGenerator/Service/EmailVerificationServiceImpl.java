@@ -28,7 +28,7 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
         user.setVerificationToken(token);
         userRepo.save(user);
 
-        String verificationUrl = "https://" + backendUrl + "/api/auth/verify-email?token=" + token;
+        String verificationUrl = "https://ingredigo.net/verify-email?token=" + token;
 
         SimpleMailMessage mailMessage = new SimpleMailMessage();
         mailMessage.setTo(user.getEmail());
@@ -38,14 +38,14 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
         mailSender.send(mailMessage);
     }
 
-    public boolean verifyEmail(String token) {
+    public User verifyEmailAndGetUser(String token) {
         User user = userRepo.findByVerificationToken(token).orElse(null);
         if (user != null) {
             user.setEnabled(true);
             user.setVerificationToken(null);
             userRepo.save(user);
-            return true;
+            return user;
         }
-        return false;
+        return null;
     }
 }

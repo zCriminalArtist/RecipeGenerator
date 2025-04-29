@@ -45,6 +45,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**", "/api/webhook/**").permitAll()  // Allow public access for authentication
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/apple-app-site-association", "/.well-known/apple-app-site-association", "/.well-known/assetlinks.json").permitAll()
                         .anyRequest().authenticated()
                 ).httpBasic(Customizer.withDefaults())
                 .exceptionHandling(exception -> exception

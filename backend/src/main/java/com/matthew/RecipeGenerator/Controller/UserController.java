@@ -4,51 +4,39 @@ import com.matthew.RecipeGenerator.Service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
+
 import com.matthew.RecipeGenerator.Model.User;
 
 @RestController
-@RequestMapping("/user")
+@RequestMapping("/api/user")
 public class UserController {
 
     @Autowired
     UserService userService;
 
-    // Get list of all users
-    @GetMapping
-    public ResponseEntity<List<User>> getAllUsers() {
-        return ResponseEntity.ok(userService.getAllUsers());
-    }
-
-    // Get user by ID
-    @GetMapping("/{user_id}")
-    public ResponseEntity<User> getUser(@PathVariable("user_id") int id) {
-        User retrievedUser = userService.getUserByUID(id);
-        return retrievedUser == null
-                ? ResponseEntity.status(HttpStatus.NOT_FOUND).build()
-                : ResponseEntity.status(HttpStatus.OK).body(retrievedUser);
-    }
-
-    // Update a user's username and password
-    @PutMapping("update/{user_id}")
-    public ResponseEntity<User> updateUser(@PathVariable("user_id") int id, @RequestBody User user) {
-        User existingUser = userService.getUserByUID(id);
-        existingUser.setUserUpdatedAt(ZonedDateTime.now());
-        existingUser.setUsername(user.getUsername());
-        existingUser.setPassword(user.getPassword());
-        User updatedUser = userService.updateUserById(id, existingUser);
-        return updatedUser == null
-                ? ResponseEntity.status(HttpStatus.BAD_REQUEST).build()
-                : ResponseEntity.ok(updatedUser);
-    }
-
-    // Delete a user
-    @DeleteMapping("/{user_id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable("user_id") int id) {
-        userService.deleteUserById(id);
-        return ResponseEntity.noContent().build();
+    @GetMapping("/status")
+    public ResponseEntity<?> getUserStatus(@AuthenticationPrincipal(errorOnInvalidType = true) User user) {
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No authenticated user found");
+        }
+        Map<String, Object> userDetails = Map.of(
+                "id", user.getUserId(),
+                "username", user.getUsername(),
+                "email", user.getEmail(),
+                "firstName", user.getFirstName(),
+                "lastName", user.getLastName(),
+                "role", user.getRole(),
+                "enabled", user.isEnabled(),
+                "createdAt", user.getUserCreatedAt(),
+                "hasSubscription", user.getSubscription() != null,
+                "subscriptionStatus", user.getSubscription() != null ? user.getSubscription().getStatus() : null
+        );
+        return ResponseEntity.ok(userDetails);
     }
 }

@@ -1,0 +1,13 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "9D4QL9F93C.me.zcriminalartist.recipegenerator",
+        "paths": [
+          "/verify-email*"
+        ]
+      }
+    ]
+  }
+}

@@ -8,7 +8,6 @@ pipeline {
         DB_PASSWORD = credentials('DB-PASSWORD')
         DB_URL = credentials('DB-URL')
         DB_USERNAME = credentials('DB-USERNAME')
-        FRONTEND_URL = credentials('FRONTEND-URL')
         JWT_EXPIRATION = credentials('JWT-EXPIRATION')
         JWT_SECRET = credentials('JWT-SECRET')
         MAIL_PASSWORD = credentials('MAIL-PASSWORD')
@@ -43,11 +42,9 @@ pipeline {
 						sh "cp -f \"${KEYSTORE_FILE}\" \"src/main/resources/keystore.p12\""
 						sh "cp -f \"${APPLE_SUBSCRIPTION_KEY_FILE}\"  \"src/main/resources/${APPLE_SUBSCRIPTION_KEY_PATH}\""
 						sh '''
-                    	export BACKEND_URL=ingredigo.net:8443
                     	export DB_PASSWORD=$DB_PASSWORD
                     	export DB_URL=$DB_URL
                     	export DB_USERNAME=$DB_USERNAME
-                    	export FRONTEND_URL=$FRONTEND_URL
                     	export JWT_EXPIRATION=$JWT_EXPIRATION
                     	export JWT_SECRET=$JWT_SECRET
                     	export MAIL_PASSWORD=$MAIL_PASSWORD
@@ -115,8 +112,6 @@ pipeline {
                         -e OPENAI_API_KEY=$OPENAI_API_KEY \\
                         -e STRIPE_API_KEY=$STRIPE_API_KEY \\
                         -e STRIPE_WEBHOOK_SECRET=$STRIPE_WEBHOOK_SECRET \\
-                        -e FRONTEND_URL=$FRONTEND_URL \\
-                        -e BACKEND_URL=ingredigo.net:8443 \\
                         -e MAIL_USERNAME=$MAIL_USERNAME \\
                         -e MAIL_PASSWORD=$MAIL_PASSWORD \\
                         -e SSL_KEYSTORE_PASSWORD=$SSL_KEYSTORE_PASSWORD \\

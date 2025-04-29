@@ -80,10 +80,19 @@ public class AuthController {
     }
 
     @GetMapping("/verify-email")
-    public ResponseEntity<String> verifyEmail(@RequestParam String token) {
-        boolean isVerified = emailVerificationService.verifyEmail(token);
-        if (isVerified) {
-            return ResponseEntity.ok("Email verified successfully");
+    public ResponseEntity<?> verifyEmail(@RequestParam String token) {
+        User user = emailVerificationService.verifyEmailAndGetUser(token);
+        if (user != null) {
+            Authentication authentication = new UsernamePasswordAuthenticationToken(
+                    user, null, user.getAuthorities());
+            String jwt = jwtUtil.generateToken(authentication);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Email verified successfully");
+            response.put("token", jwt);
+            response.put("verified", true);
+
+            return ResponseEntity.ok(response);
         } else {
             return ResponseEntity.badRequest().body("Invalid verification token");
         }
@@ -102,10 +111,10 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<String> registerUser(@Valid @RequestBody UserRegistrationRequest request) {
         if (userRepository.findByUsername(request.getUsername()).isPresent()) {
-            return ResponseEntity.badRequest().body("Username is already taken.");
+            return ResponseEntity.badRequest().body("Username is already taken");
         }
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            return ResponseEntity.badRequest().body("Email is already associated with an account.");
+            return ResponseEntity.badRequest().body("Email is already associated with an account");
         }
 
         User user = new User();
