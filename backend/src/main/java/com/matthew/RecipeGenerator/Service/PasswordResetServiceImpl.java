@@ -32,7 +32,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     @Autowired
     private PasswordResetTokenRepo tokenRepository;
 
-    @Value("${BACKEND_URL}")
+    @Value("${backend.url}")
     private String backendUrl;
 
     @Override
