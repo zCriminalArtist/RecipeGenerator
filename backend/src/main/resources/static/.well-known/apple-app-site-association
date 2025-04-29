@@ -9,5 +9,8 @@
         ]
       }
     ]
+  },
+  "webcredentials": {
+    "apps": ["9D4QL9F93C.me.zcriminalartist.recipegenerator"]
   }
 }

@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Verification - IngrediGo</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="icon" href="/images/favicon.ico" type="image/x-icon">
+    <meta name="apple-itunes-app" content="app-id=YOUR_APP_ID, app-argument=ingredigo://verify-email?token=DYNAMIC_TOKEN">
+    <style>
+        :root {
+            --primary: #26A875;
+            --background: #FFFFFF;
+            --card-background: #F5F5F5;
+            --primary-text: #222222;
+            --secondary-text: #666666;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --primary: #26A875;
+                --background: #121212;
+                --card-background: #1E1E1E;
+                --primary-text: #FFFFFF;
+                --secondary-text: #BBBBBB;
+            }
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background);
+            color: var(--primary-text);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            justify-content: space-between;
+        }
+
+        .logo {
+            width: 90px;
+            height: 90px;
+            margin: 30px auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .title {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .title span {
+            color: var(--primary);
+        }
+
+        .subtitle {
+            font-size: 18px;
+            color: var(--secondary-text);
+            line-height: 1.5;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background-color: var(--card-background);
+            border-radius: 12px;
+            padding: 25px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 15px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .secondary-button {
+            background-color: transparent;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .status-icon {
+            font-size: 48px;
+            margin: 20px 0;
+        }
+
+        .qr-container {
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .qr-code {
+            width: 180px;
+            height: 180px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 10px;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="content">
+        <div class="header">
+            <img th:src="@{/images/logo.png}" alt="IngrediGo Logo" class="logo">
+            <h1 class="title">Email <span>Verification</span></h1>
+            <p class="subtitle">We've received your verification request. Use one of the options below to complete your verification.</p>
+        </div>
+
+        <div id="verification-status" class="card">
+            <div id="loading" style="display: block;">
+                <div class="status-icon">⏳</div>
+                <h2>Processing Verification</h2>
+                <p>Please wait while we verify your email address...</p>
+            </div>
+            <div id="success" style="display: none;">
+                <div class="status-icon">✓</div>
+                <h2>Email Verified!</h2>
+                <p>Your email has been successfully verified. You can now access all features of IngrediGo.</p>
+            </div>
+            <div id="error" style="display: none;">
+                <div class="status-icon">✕</div>
+                <h2>Verification Failed</h2>
+                <p id="error-message">Your verification link may have expired or is invalid.</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Open or Download the App</h2>
+            <p>Get the full IngrediGo experience with our mobile app.</p>
+
+            <div class="qr-container">
+                <p>Scan to download or open:</p>
+                <div class="qr-code" id="qr-code"></div>
+            </div>
+
+            <a th:href="${appUrl}" class="button">Open in App</a>
+            <div id="store-buttons">
+                <a th:href="${playStoreUrl}" class="button secondary-button">Get on Google Play</a>
+                <a th:href="${appStoreUrl}" class="button secondary-button">Download on App Store</a>
+            </div>
+        </div>
+    </div>
+
+    <footer style="text-align: center; padding: 20px; color: var(--secondary-text);">
+        <p>© 2025 IngrediGo. All rights reserved.</p>
+    </footer>
+</div>
+
+<script th:inline="javascript">
+    // Get the token from Thymeleaf
+    const token = /*[[${token}]]*/ '';
+    const appUrl = /*[[${appUrl}]]*/ '';
+
+    // Generate QR code for the app link
+    window.onload = function() {
+        // Load QR code library
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js';
+        script.onload = function() {
+            QRCode.toCanvas(document.getElementById('qr-code'), appUrl, function (error) {
+                if (error) console.error(error);
+            });
+        };
+        document.head.appendChild(script);
+
+        // Verify the email token
+        verifyEmail(token);
+    };
+
+    // Function to verify email
+    async function verifyEmail(token) {
+        if (!token) {
+            showError('No verification token found');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/auth/verify-email?token=${token}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                showSuccess();
+            } else {
+                const data = await response.json();
+                showError(data.message || 'Verification failed');
+            }
+        } catch (error) {
+            showError('An error occurred during verification');
+            console.error('Error:', error);
+        }
+    }
+
+    function showSuccess() {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('success').style.display = 'block';
+        document.getElementById('error').style.display = 'none';
+    }
+
+    function showError(message) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('success').style.display = 'none';
+        document.getElementById('error').style.display = 'block';
+        document.getElementById('error-message').innerText = message;
+    }
+</script>
+</body>
+</html>
