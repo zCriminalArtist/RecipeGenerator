@@ -1,10 +1,26 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TextInput, Button, Alert, SafeAreaView, TouchableOpacity, useColorScheme } from 'react-native';
-import { Colors, darkTheme, lightTheme } from '@/constants/Colors';
-import api from '@/utils/api';
-import { useNavigation } from '@react-navigation/native';
-import ContentLoader, { Rect } from 'react-content-loader/native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import React, { useEffect, useState, useRef } from "react";
+import {
+  View,
+  Text,
+  FlatList,
+  TextInput,
+  Alert,
+  SafeAreaView,
+  TouchableOpacity,
+  useColorScheme,
+  Share,
+  Animated,
+  Easing,
+  StatusBar,
+  Keyboard,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
+} from "react-native";
+import { Colors, darkTheme, lightTheme } from "@/constants/Colors";
+import api from "@/utils/api";
+import { useNavigation } from "@react-navigation/native";
+import ContentLoader, { Rect } from "react-content-loader/native";
+import Icon from "react-native-vector-icons/MaterialIcons";
 
 interface Ingredient {
   id: number;
@@ -31,32 +47,41 @@ export default function RecipeScreen() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [filteredRecipes, setFilteredRecipes] = useState<Recipe[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [editedIngredients, setEditedIngredients] = useState<{ [key: number]: { quantity: string; unit: string } }>({});
-  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [editedIngredients, setEditedIngredients] = useState<{
+    [key: number]: { quantity: string; unit: string };
+  }>({});
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [isInputFocused, setIsInputFocused] = useState<boolean>(false);
+  const [expandedRecipes, setExpandedRecipes] = useState<{
+    [key: number]: boolean;
+  }>({});
   const colorScheme = useColorScheme();
-  const navigation = useNavigation();
+  const theme = colorScheme === "dark" ? darkTheme : lightTheme;
+  const [animatedItems, setAnimatedItems] = useState<
+    {
+      opacity: Animated.Value;
+      height: Animated.Value;
+      expanded: Animated.Value;
+    }[]
+  >([]);
 
-  React.useLayoutEffect(() => {
-    navigation.setOptions({
-      headerLargeTitle: true,
-      headerTitle: () => null,
-      headerRight: () => {
-        return (
-          <TouchableOpacity onPress={() => fetchRecipes()} style={{ marginRight: 0 }}>
-            <Icon name="refresh" size={30} color={theme.primary} />
-          </TouchableOpacity>
-        );
-      },
-      headerSearchBarOptions: {
-        placeholder: "Search",
-        visible: true,
-        cancelButtonText: "",
-        onChangeText: (event: { nativeEvent: { text: React.SetStateAction<string>; }; }) => {
-          setSearchQuery(event.nativeEvent.text);
-        },
-      },
-    });
-  }, [navigation]);
+  const headerHeight = useRef(new Animated.Value(140)).current;
+  const headerOpacity = useRef(new Animated.Value(1)).current;
+  const searchBarY = useRef(new Animated.Value(-25)).current;
+  const titleOpacity = useRef(new Animated.Value(1)).current;
+  const scrollY = useRef(new Animated.Value(0)).current;
+
+  const headerTranslateY = scrollY.interpolate({
+    inputRange: [0, 140],
+    outputRange: [0, -20],
+    extrapolate: "clamp",
+  });
+
+  const searchBarTranslateY = scrollY.interpolate({
+    inputRange: [0, 140],
+    outputRange: [0, -60],
+    extrapolate: "clamp",
+  });
 
   useEffect(() => {
     fetchRecipes();
@@ -70,17 +95,79 @@ export default function RecipeScreen() {
     setIsLoading(true);
     try {
       const response = await api.get<Recipe[]>("/recipes");
+
+      const animatedValues = response.data.map(() => ({
+        opacity: new Animated.Value(0),
+        height: new Animated.Value(0.5),
+        expanded: new Animated.Value(0), // 0 = collapsed, 1 = expanded
+      }));
+
+      setAnimatedItems(animatedValues);
       setRecipes(response.data);
-      setFilteredRecipes(response.data);
+
+      setExpandedRecipes({});
+
+      setTimeout(() => {
+        triggerTrickleAnimation(animatedValues);
+      }, 100);
     } catch (error) {
-      Alert.alert('Error', 'Error fetching recipes');
+      Alert.alert("Error", "Error fetching recipes");
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleScroll = Animated.event(
+    [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+    {
+      useNativeDriver: true,
+      listener: (event: NativeSyntheticEvent<NativeScrollEvent>) => {},
+    }
+  );
+
+  const triggerTrickleAnimation = (items: typeof animatedItems) => {
+    const animations = items.map((item, index) => {
+      const delay = index * 200;
+
+      return Animated.sequence([
+        Animated.delay(delay),
+        Animated.parallel([
+          Animated.timing(item.opacity, {
+            toValue: 1,
+            duration: 800,
+            useNativeDriver: false,
+            easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+          }),
+          Animated.timing(item.height, {
+            toValue: 1,
+            duration: 1000,
+            useNativeDriver: false,
+            easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+          }),
+        ]),
+      ]);
+    });
+    Animated.stagger(300, animations).start();
+  };
+
+  const toggleRecipeExpansion = (recipeId: number, index: number) => {
+    const newExpandedState = !expandedRecipes[recipeId];
+
+    setExpandedRecipes({
+      ...expandedRecipes,
+      [recipeId]: newExpandedState,
+    });
+
+    Animated.timing(animatedItems[index].expanded, {
+      toValue: newExpandedState ? 1 : 0,
+      duration: 300,
+      useNativeDriver: false,
+      easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+    }).start();
+  };
+
   const filterRecipes = () => {
-    const filtered = recipes.filter(recipe =>
+    const filtered = recipes.filter((recipe) =>
       recipe.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
     setFilteredRecipes(filtered);
@@ -91,183 +178,363 @@ export default function RecipeScreen() {
       await api.delete(`/recipes/${recipeId}`);
       fetchRecipes();
     } catch (error) {
-      Alert.alert('Error', 'Error deleting recipe');
+      Alert.alert("Error", "Error deleting recipe");
     }
   };
 
   const handleUpdate = async (recipeIngredientId: number) => {
     try {
       const { quantity, unit } = editedIngredients[recipeIngredientId] ?? {};
-      await api.put(`/recipeIngredients/${recipeIngredientId}`, { quantity, unit });
+      await api.put(`/recipeIngredients/${recipeIngredientId}`, {
+        quantity,
+        unit,
+      });
     } catch (error) {
-      Alert.alert('Error', 'Error updating recipe ingredient');
+      Alert.alert("Error", "Error updating recipe ingredient");
     }
   };
 
   const renderInstructions = (instructions: string) => {
-    const steps = instructions.split(/(?:\d+\.\s|\n)/).filter(step => step.trim() !== '');
+    const steps = instructions
+      .split(/(?:\d+\.\s|\n)/)
+      .filter((step) => step.trim() !== "");
     return steps.map((step, index) => (
-      <View key={index} style={styles.instructionStep}>
-        <Text style={[styles.instructionNumber, { color: theme.primaryText }]}>{`${index + 1}.`}</Text>
-        <Text style={[styles.instructionText, { color: theme.primaryText }]}>{step}</Text>
+      <View key={index} className="flex-row items-start mb-1">
+        <Text
+          className="font-bold mr-1 text-sm"
+          style={{ color: theme.primaryText }}>{`${index + 1}.`}</Text>
+        <Text className="flex-1 text-sm" style={{ color: theme.primaryText }}>
+          {step}
+        </Text>
       </View>
     ));
   };
 
-  const renderRecipe = ({ item }: { item: Recipe }) => (
-    <View style={[styles.recipe, { backgroundColor: theme.cardBackground }]}>
-      <TouchableOpacity style={styles.deleteButton} onPress={() => handleDeleteRecipe(item.id)}>
-        <Icon name="delete" size={24} color={theme.secondaryText} />
-      </TouchableOpacity>
-      <Text style={[styles.recipeTitle, { color: theme.primaryText }]}>{item.name}</Text>
-      <Text style={[{ marginBottom: 20, color: theme.primaryText }]}>{item.description}</Text>
-      <Text style={[{ fontWeight: '600', marginBottom: 8, color: theme.primaryText }]}>Ingredients</Text>
-      {item.recipeIngredients.map((recipeIngredient) => (
-        <View key={recipeIngredient.id} style={styles.ingredientContainer}>
-          <Text style={{ marginVertical: 4, color: theme.primaryText }}>
-            {recipeIngredient.ingredient.name.replace(/\b\w+/g, word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())}
-          </Text>
-          <View style={{ position: 'absolute', flexDirection: 'row', right: 20, alignItems: 'center' }}>
-            <TextInput
-            style={[
-              {
-              color: theme.primaryText,
-              backgroundColor: theme.secondaryText,
-              marginLeft: 10,
-              borderTopLeftRadius: 15,
-              borderBottomLeftRadius: 15,
-              paddingLeft: 8,
-              paddingVertical: 4,
-              minWidth: 0,
-              },
-            ]}
-            placeholder="Quantity"
-            value={editedIngredients[recipeIngredient.id]?.quantity || recipeIngredient.quantity}
-            onChangeText={(text) =>
-              setEditedIngredients((prev) => ({
-              ...prev,
-              [recipeIngredient.id]: {
-                quantity: text,
-                unit: prev[recipeIngredient.id]?.unit || recipeIngredient.unit,
-              },
-              }))
-            }
-            />
-            <TextInput
-            style={[
-              {
-              color: theme.primaryText,
-              backgroundColor: theme.secondaryText,
-              borderTopRightRadius: 15,
-              borderBottomRightRadius: 15,
-              paddingRight: 8,
-              paddingHorizontal: 4,
-              paddingVertical: 4,
-              minWidth: 0,
-              },
-            ]}
-            value={editedIngredients[recipeIngredient.id]?.unit || recipeIngredient.unit}
-            onChangeText={(text) =>
-              setEditedIngredients((prev) => ({
-              ...prev,
-              [recipeIngredient.id]: {
-                quantity: prev[recipeIngredient.id]?.quantity || recipeIngredient.quantity,
-                unit: text,
-              },
-              }))
-            }
-            />
-            {editedIngredients[recipeIngredient.id] && (
-          <TouchableOpacity onPress={() => handleUpdate(recipeIngredient.id)} style={{ marginLeft: 5 }}>
-            <Icon name="save" size={20} color={theme.primaryText} />
-          </TouchableOpacity>
-          )}
-          </View>
-        </View>
-      ))}
-      <Text style={[{ fontWeight: '600', marginVertical: 5, marginTop: 5, color: theme.primaryText }]}>Instructions</Text>
-      {renderInstructions(item.instructions)}
-    </View>
-  );
+  const renderRecipe = ({ item, index }: { item: Recipe; index: number }) => {
+    const isExpanded = expandedRecipes[item.id] || false;
 
-  const theme = colorScheme === 'dark' ? darkTheme : lightTheme;
+    const animatedItem = animatedItems[index] || {
+      opacity: new Animated.Value(1),
+      height: new Animated.Value(1),
+      expanded: new Animated.Value(0),
+    };
+
+    return (
+      <Animated.View
+        className="p-4 mx-6 my-3 rounded-md"
+        style={{
+          backgroundColor: theme.input.backgroundColor,
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.2,
+          shadowRadius: 4,
+          elevation: 5,
+          opacity: animatedItem.opacity || 1,
+          transform: [
+            {
+              scale:
+                animatedItem.opacity.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0.97, 1],
+                }) || 1,
+            },
+          ],
+        }}>
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => toggleRecipeExpansion(item.id, index)}
+          className="flex-row justify-between items-center mb-4">
+          <Animated.Text
+            style={{
+              color: theme.primaryText,
+              fontFamily: "Montserrat_700Bold",
+            }}
+            className="text-lg font-bold mb-1">
+            {item.name}
+          </Animated.Text>
+
+          <Animated.View
+            style={{
+              transform: [
+                {
+                  rotate: animatedItem.expanded.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: ["0deg", "180deg"],
+                  }),
+                },
+              ],
+            }}>
+            <Icon name="expand-more" size={28} color={theme.secondaryText} />
+          </Animated.View>
+        </TouchableOpacity>
+
+        <Animated.Text
+          style={{
+            color: theme.primaryText,
+            opacity:
+              animatedItem.opacity.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0, 1],
+              }) || 1,
+          }}
+          className="mb-5">
+          {item.description}
+        </Animated.Text>
+
+        <Animated.Text
+          style={{
+            color: theme.primaryText,
+            opacity:
+              animatedItem.opacity.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0.5, 1],
+              }) || 1,
+          }}
+          className="font-semibold mb-2">
+          Ingredients
+        </Animated.Text>
+
+        <Animated.View
+          style={{
+            maxHeight: animatedItem.expanded.interpolate({
+              inputRange: [0, 1],
+              outputRange: ["0%", "1000%"],
+            }),
+            overflow: "hidden",
+            opacity:
+              animatedItem.opacity.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0.4, 1],
+              }) || 1,
+          }}>
+          {item.recipeIngredients.map((recipeIngredient) => (
+            <View
+              key={recipeIngredient.id}
+              className="flex-row items-center ml-2.5 mb-1.5">
+              <Text className="my-1" style={{ color: theme.primaryText }}>
+                {recipeIngredient.ingredient.name.replace(
+                  /\b\w+/g,
+                  (word) =>
+                    word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                )}
+              </Text>
+
+              <View className="absolute flex-row right-5 items-center">
+                <TextInput
+                  className="ml-2.5 pl-2 py-1 min-w-0 rounded-l-full"
+                  style={{
+                    color: theme.primaryText,
+                    backgroundColor: theme.secondaryText,
+                  }}
+                  placeholder="Quantity"
+                  value={
+                    editedIngredients[recipeIngredient.id]?.quantity ||
+                    recipeIngredient.quantity
+                  }
+                  onChangeText={(text) =>
+                    setEditedIngredients((prev) => ({
+                      ...prev,
+                      [recipeIngredient.id]: {
+                        quantity: text,
+                        unit:
+                          prev[recipeIngredient.id]?.unit ||
+                          recipeIngredient.unit,
+                      },
+                    }))
+                  }
+                />
+                <TextInput
+                  className="px-1 py-1 pr-2 min-w-0 rounded-r-full"
+                  style={{
+                    color: theme.primaryText,
+                    backgroundColor: theme.secondaryText,
+                  }}
+                  value={
+                    editedIngredients[recipeIngredient.id]?.unit ||
+                    recipeIngredient.unit
+                  }
+                  onChangeText={(text) =>
+                    setEditedIngredients((prev) => ({
+                      ...prev,
+                      [recipeIngredient.id]: {
+                        quantity:
+                          prev[recipeIngredient.id]?.quantity ||
+                          recipeIngredient.quantity,
+                        unit: text,
+                      },
+                    }))
+                  }
+                />
+                {editedIngredients[recipeIngredient.id] && (
+                  <TouchableOpacity
+                    className="ml-1.5"
+                    onPress={() => handleUpdate(recipeIngredient.id)}>
+                    <Icon name="save" size={20} color={theme.primaryText} />
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
+          ))}
+        </Animated.View>
+
+        <Animated.Text
+          style={{
+            color: theme.primaryText,
+            opacity:
+              animatedItem.opacity.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0.5, 1],
+              }) || 1,
+            marginTop: animatedItem.expanded.interpolate({
+              inputRange: [0, 1],
+              outputRange: [3, 15],
+            }),
+          }}
+          className="font-semibold my-1.5">
+          Instructions
+        </Animated.Text>
+
+        <Animated.View
+          style={{
+            maxHeight: animatedItem.height.interpolate({
+              inputRange: [0.5, 1],
+              outputRange: ["50%", "100%"],
+            }),
+            opacity:
+              animatedItem.opacity.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0.4, 1],
+              }) || 1,
+          }}>
+          {renderInstructions(item.instructions)}
+        </Animated.View>
+
+        {/* Action buttons row at the bottom */}
+        <View className="flex-row justify-end items-center mt-3">
+          <TouchableOpacity
+            className="p-2 rounded-full bg-gray-400 dark:bg-gray-600 mr-3"
+            onPress={() => handleDeleteRecipe(item.id)}>
+            <Icon name="delete" size={22} color="white" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            className="p-2 rounded-full bg-[#26A875]"
+            onPress={() => {
+              const recipeText = `Recipe: ${item.name}\n\nDescription: ${item.description}\n\nInstructions:\n${item.instructions}`;
+              Share.share({ message: recipeText });
+            }}>
+            <Icon name="share" size={22} color="white" />
+          </TouchableOpacity>
+        </View>
+      </Animated.View>
+    );
+  };
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
-      {isLoading ? (
-        <ContentLoader
-          speed={1}
-          width="100%"
-          height={600}
-          backgroundColor={theme.background}
-          foregroundColor={theme.secondaryText}>
-          <Rect x="0" y="0" rx="4" ry="4" width="100%" height="200" />
-          <Rect x="0" y="220" rx="4" ry="4" width="100%" height="200" />
-          <Rect x="0" y="440" rx="4" ry="4" width="100%" height="200" />
-        </ContentLoader>
-      ) : (
-        <FlatList
-          data={filteredRecipes}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={renderRecipe}
-          contentContainerStyle={styles.container}
+    <View style={{ backgroundColor: theme.background }} className="flex-1">
+      <Animated.View
+        style={{
+          height: 140,
+          backgroundColor: theme.headerBackground,
+          zIndex: 1,
+          transform: [{ translateY: headerTranslateY }],
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+        }}>
+        <SafeAreaView>
+          <StatusBar
+            barStyle={colorScheme === "dark" ? "light-content" : "dark-content"}
+            backgroundColor={theme.primary}
+          />
+          <Animated.View
+            className="flex-row justify-between items-center mx-7 mt-6"
+            style={{ opacity: titleOpacity }}>
+            <Text
+              style={{ fontFamily: "Montserrat_700Bold" }}
+              className="text-2xl font-bold text-[#8BDBC1]">
+              Your Recipes
+            </Text>
+            <TouchableOpacity onPress={() => fetchRecipes()}>
+              <Icon name="refresh" size={30} color="#8BDBC1" />
+            </TouchableOpacity>
+          </Animated.View>
+        </SafeAreaView>
+      </Animated.View>
+
+      <Animated.View
+        style={{
+          backgroundColor: theme.input.backgroundColor,
+          borderWidth: 1,
+          borderColor: isInputFocused ? `${theme.divider}40` : "transparent",
+          marginTop: 115,
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.2,
+          shadowRadius: 4,
+          elevation: 5,
+          zIndex: 2,
+          position: "absolute",
+          left: 24,
+          right: 24,
+          transform: [{ translateY: searchBarTranslateY }],
+        }}
+        className="rounded-md flex-row items-center px-4 py-3 relative">
+        <Icon name="search" size={24} color="#888" />
+        <TextInput
+          className="flex-1 pl-2 h-full"
+          placeholder="Search recipes..."
+          placeholderTextColor="#888"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          onFocus={() => setIsInputFocused(true)}
+          onBlur={() => setIsInputFocused(false)}
+          style={{
+            textAlignVertical: "center",
+            color: theme.primaryText,
+            fontSize: 16,
+            fontFamily: "Montserrat_400Regular",
+          }}
         />
-      )}
-    </SafeAreaView>
+        {searchQuery.length > 0 && (
+          <TouchableOpacity
+            onPress={() => {
+              setSearchQuery("");
+              Keyboard.dismiss();
+            }}
+            className="p-2">
+            <Icon name="close" size={24} color="#888" />
+          </TouchableOpacity>
+        )}
+      </Animated.View>
+
+      <View className="flex-1 mt-[120px]">
+        {isLoading ? (
+          <View className="p-6 w-full">
+            <ContentLoader
+              speed={1}
+              width="100%"
+              height={600}
+              backgroundColor={theme.background}
+              foregroundColor={theme.secondaryText}>
+              <Rect x="0" y="0" rx="8" ry="8" width="100%" height="200" />
+              <Rect x="0" y="220" rx="8" ry="8" width="100%" height="200" />
+              <Rect x="0" y="440" rx="8" ry="8" width="100%" height="200" />
+            </ContentLoader>
+          </View>
+        ) : (
+          <Animated.FlatList
+            data={filteredRecipes}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={renderRecipe}
+            contentContainerStyle={{
+              paddingVertical: 16,
+              paddingTop: 60,
+            }}
+            onScroll={handleScroll}
+            scrollEventThrottle={16} // Ensures smooth scroll events
+          />
+        )}
+      </View>
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    marginTop: 0,
-    marginBottom: 80,
-    padding: 16,
-  },
-  container: {
-    padding: 16,
-  },
-  recipe: {
-    backgroundColor: '#f0f0f0',
-    padding: 16,
-    marginBottom: 12,
-    borderRadius: 4,
-    position: 'relative',
-  },
-  deleteButton: {
-    position: 'absolute',
-    top: 12,
-    right: 10,
-  },
-  recipeTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 20,
-  },
-  ingredientContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginLeft: 10,
-    marginBottom: 5,
-  },
-  input: {
-    height: 25,
-    marginHorizontal: 0,
-    paddingHorizontal: 8,
-    flex: 1,
-  },
-  instructionStep: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 5,
-  },
-  instructionNumber: {
-    fontWeight: 'bold',
-    marginRight: 5,
-    fontSize: 14,
-  },
-  instructionText: {
-    flex: 1,
-    fontSize: 14,
-  },
-});

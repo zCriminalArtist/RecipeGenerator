@@ -5,7 +5,7 @@
     "version": "0.1.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
+    "scheme": "https",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -14,15 +14,31 @@
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSCameraUsageDescription": "This app uses camera access to scan cards used for payment.",
-        "NSInAppPurchaseUsageDescription": "This app uses in-app purchases to provide premium features."
-      }
+        "NSInAppPurchaseUsageDescription": "This app uses in-app purchases to provide premium features.",
+        "PushNotificationEntitlement": "com.zcriminalartist.ingredigo.push"
+      },
+      "associatedDomains": ["applinks:ingredigo.net"]
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "me.zcriminalartist.recipegenerator"
+      "package": "me.zcriminalartist.recipegenerator",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "ingredigo.net",
+              "pathPrefix": "/verify-email"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -38,6 +54,14 @@
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static"
+          }
         }
       ]
     ],

@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import * as RNIap from "react-native-iap";
 import { Alert, Platform } from "react-native";
 import api from "@/utils/api";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
+import { AuthContext } from "@/app/(tabs)/_layout";
 
 const skus = Platform.select({
   ios: ["ingredigo_monthly_sub"],
@@ -16,6 +17,7 @@ export function useSubscription(token: string | string[]) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const { checkAuthStatus } = useContext(AuthContext);
 
   useEffect(() => {
     const init = async () => {
@@ -60,12 +62,24 @@ export function useSubscription(token: string | string[]) {
           try {
             const result = await verifyWithBackend(receipt, skus[0]);
             if (result === 200) {
+              console.log("Subscription verified successfully");
               if (typeof token === "string") {
-                await AsyncStorage.setItem("jwt", token);
+                console.log("Token:", token);
+                try {
+                  await AsyncStorage.setItem("jwt", token);
+                } catch (error) {
+                  console.error("Error saving token to AsyncStorage:", error);
+                }
               } else {
+                console.error("Token is not a string");
                 throw new Error("Invalid token type");
               }
+              console.log("Token saved to AsyncStorage");
+
+              await checkAuthStatus();
+
               router.push("/");
+              console.log("Subscription successful");
             }
           } catch (error) {
             if (axios.isAxiosError(error) && error.response?.status === 409) {
@@ -79,7 +93,7 @@ export function useSubscription(token: string | string[]) {
                   {
                     text: "OK",
                     onPress: () => {
-                      router.push("/login");
+                      router.push("/account?form=login");
                     },
                   },
                 ]
@@ -114,11 +128,12 @@ export function useSubscription(token: string | string[]) {
       );
 
       console.log("Subscription verified:", res.data);
+      console.log("Status code:", res.status);
       return res.status;
     } catch (err) {
       setError("Backend verification error");
       console.error(err);
-      throw err; // Re-throw the error to handle it outside if needed
+      throw err;
     }
   };
 

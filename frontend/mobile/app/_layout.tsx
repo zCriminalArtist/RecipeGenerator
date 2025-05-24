@@ -11,15 +11,19 @@ import { useEffect } from "react";
 import "react-native-reanimated";
 
 import { useColorScheme } from "@/hooks/useColorScheme";
-import { StripeProvider } from "@stripe/stripe-react-native";
-
-// Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const [loaded] = useFonts({
-    SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
+    Lato_400Regular: require("@/assets/fonts/Lato-Regular.ttf"),
+    Playfair: require("@/assets/fonts/PlayfairDisplay-Bold.ttf"),
+    Montserrat_700Bold: require("@/assets/fonts/Montserrat-Bold.ttf"),
+    Montserrat_600SemiBold: require("@/assets/fonts/Montserrat-SemiBold.ttf"),
+    Montserrat_500Medium: require("@/assets/fonts/Montserrat-Medium.ttf"),
+    Montserrat_400Regular: require("@/assets/fonts/Montserrat-Regular.ttf"),
+    OpenSans: require("@/assets/fonts/OpenSans-Regular.ttf"),
+    BebasNeue_Regular: require("@/assets/fonts/BebasNeue-Regular.ttf"),
   });
 
   useEffect(() => {
@@ -34,10 +38,12 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+      {/* <DeepLinkHandler /> */}
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="register" options={{ headerShown: false }} />
-        <Stack.Screen name="login" options={{ headerShown: false }} />
+        <Stack.Screen name="account" options={{ headerShown: false }} />
+        <Stack.Screen name="welcome" options={{ headerShown: false }} />
+        <Stack.Screen name="onboarding" options={{ headerShown: false }} />
         <Stack.Screen name="forgot" options={{ headerShown: false }} />
         <Stack.Screen name="trial" options={{ headerShown: false }} />
         <Stack.Screen name="trial-ended" options={{ headerShown: false }} />
