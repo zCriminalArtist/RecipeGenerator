@@ -9,6 +9,7 @@ import {
   MenuTrigger,
 } from "react-native-popup-menu";
 import { Colors } from "@/constants/Colors";
+import { router } from "expo-router";
 
 interface ProfileMenuProps {
   username: string;
@@ -44,7 +45,11 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({
         customStyles={{
           optionsContainer: { margin: 0, marginTop: 45, borderRadius: 5 },
         }}>
-        <MenuOption customStyles={{ optionText: styles.menuOptionText }}>
+        <MenuOption
+          customStyles={{ optionText: styles.menuOptionText }}
+          onSelect={() => {
+            router.push("/account-settings");
+          }}>
           <View style={styles.menuOption}>
             <Icon name="manage-accounts" size={20} color={Colors.light.text} />
             <Text style={[styles.menuOptionText, { color: Colors.light.text }]}>

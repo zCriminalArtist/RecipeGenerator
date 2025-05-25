@@ -250,7 +250,7 @@ export default function HomeScreen() {
 
   const handleSignOut = async () => {
     await AsyncStorage.removeItem("jwt");
-    router.push("/account");
+    router.replace("/account");
   };
 
   const renderInstructions = (instructions: string) => {

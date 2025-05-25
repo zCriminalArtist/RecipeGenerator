@@ -99,7 +99,6 @@ export default function VerifyingEmailScreen() {
         className="flex-1"
         style={{ backgroundColor: theme.background }}>
         <View className="flex-1 p-6 justify-between">
-          {/* Top section with logo */}
           <View className="items-center mt-8">
             <Image
               source={
@@ -145,7 +144,6 @@ export default function VerifyingEmailScreen() {
             </View>
           </View>
 
-          {/* Middle section with verification status */}
           <View className="flex-1 justify-center items-center my-4">
             {verificationStatus === "loading" && (
               <ActivityIndicator size="large" color={theme.primary} />
@@ -189,7 +187,6 @@ export default function VerifyingEmailScreen() {
             </View>
           </View>
 
-          {/* Bottom section with buttons */}
           <View className="mb-6">
             {verificationStatus === "loading" ? (
               <View

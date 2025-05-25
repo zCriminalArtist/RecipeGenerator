@@ -56,7 +56,7 @@ export default function LoginForm({ setIsAuthenticated }: LoginFormProps) {
         if (setIsAuthenticated) {
           setIsAuthenticated(true);
         } else {
-          router.push("/");
+          router.replace("/");
         }
         setError(null);
       }
@@ -66,7 +66,7 @@ export default function LoginForm({ setIsAuthenticated }: LoginFormProps) {
       } else if (axios.isAxiosError(err) && err.response?.status === 402) {
         const { token } = err.response?.data;
         console.log("Token:", token);
-        router.push({
+        router.replace({
           pathname: "/onboarding",
           params: { email: data.email, token: token },
         });

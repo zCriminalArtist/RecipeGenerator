@@ -88,13 +88,12 @@ export default function RegisterForm() {
 
   const onSubmit = async (data: UserRegistrationData) => {
     try {
-      // Trigger validation for the final step
       const isValid = await trigger(["firstName", "lastName"]);
       if (!isValid) return;
 
       const response = await api.post("/api/auth/register", data);
       if (response.status === 200) {
-        router.push({ pathname: "/onboarding", params: { email: email } });
+        router.replace({ pathname: "/onboarding", params: { email: email } });
         setError(null);
       }
     } catch (err) {
@@ -107,18 +106,14 @@ export default function RegisterForm() {
     }
   };
 
-  // Add a new animated value for opacity
   const socialLoginOpacity = useRef(new Animated.Value(1)).current;
 
-  // Update the animateStep function to handle the opacity animation
   const animateStep = async (direction: "next" | "back") => {
     if (direction === "next") {
       // Validate current step before proceeding
       let isValid = true;
       if (step === 1) {
         isValid = await trigger(["username", "email"]);
-
-        // Fade out social login options when leaving step 1
         if (isValid) {
           Animated.timing(socialLoginOpacity, {
             toValue: 0,
@@ -154,7 +149,6 @@ export default function RegisterForm() {
       }).start(() => {
         setStep(step - 1);
 
-        // Fade in social login options when returning to step 1
         if (step === 2) {
           Animated.timing(socialLoginOpacity, {
             toValue: 1,
@@ -257,10 +251,8 @@ export default function RegisterForm() {
     );
   };
 
-  // Add effect to measure heights after layout
   useEffect(() => {
     const timer = setTimeout(() => {
-      // Give time for layout to complete
       measureStepHeights();
     }, 100);
 
@@ -287,7 +279,6 @@ export default function RegisterForm() {
     }
   };
 
-  // Modify renderStep to include refs
   const renderStep = (step: number) => {
     switch (step) {
       case 1:
@@ -372,13 +363,12 @@ export default function RegisterForm() {
     }
   };
 
-  // Create interpolation for button position based on step heights
   const buttonPositionY = animation.interpolate({
     inputRange: [0, 1, 2],
     outputRange: [
-      0, // Step 1 position
-      stepHeights.step2 - stepHeights.step1, // Step 2 adjustment
-      stepHeights.step3 - stepHeights.step1, // Step 3 adjustment
+      0,
+      stepHeights.step2 - stepHeights.step1,
+      stepHeights.step3 - stepHeights.step1,
     ],
   });
 
@@ -509,7 +499,6 @@ export default function RegisterForm() {
             </TouchableOpacity>
           </View>
 
-          {/* Wrap the social login section in an Animated.View with opacity animation */}
           <Animated.View style={{ opacity: socialLoginOpacity }}>
             <View className="flex-row items-center my-6">
               <View

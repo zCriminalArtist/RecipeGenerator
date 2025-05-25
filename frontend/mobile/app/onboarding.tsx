@@ -88,7 +88,7 @@ export default function OnboardingScreen() {
 
     if (currentStep === QUESTIONS.length + 2) {
       setTimeout(() => {
-        router.push({ pathname: "/trial", params: { token: token } });
+        router.replace({ pathname: "/trial", params: { token: token } });
       }, 2000);
       return (
         <View className="flex-1 p-6 justify-center items-center">

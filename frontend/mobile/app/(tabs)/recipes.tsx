@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import {
   View,
   Text,
@@ -18,7 +18,7 @@ import {
 } from "react-native";
 import { Colors, darkTheme, lightTheme } from "@/constants/Colors";
 import api from "@/utils/api";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import ContentLoader, { Rect } from "react-content-loader/native";
 import Icon from "react-native-vector-icons/MaterialIcons";
 
@@ -83,9 +83,15 @@ export default function RecipeScreen() {
     extrapolate: "clamp",
   });
 
-  useEffect(() => {
-    fetchRecipes();
-  }, []);
+  useEffect(() => {}, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchRecipes();
+
+      return () => {};
+    }, [])
+  );
 
   useEffect(() => {
     filterRecipes();
@@ -408,7 +414,6 @@ export default function RecipeScreen() {
           {renderInstructions(item.instructions)}
         </Animated.View>
 
-        {/* Action buttons row at the bottom */}
         <View className="flex-row justify-end items-center mt-3">
           <TouchableOpacity
             className="p-2 rounded-full bg-gray-400 dark:bg-gray-600 mr-3"
@@ -500,8 +505,7 @@ export default function RecipeScreen() {
             onPress={() => {
               setSearchQuery("");
               Keyboard.dismiss();
-            }}
-            className="p-2">
+            }}>
             <Icon name="close" size={24} color="#888" />
           </TouchableOpacity>
         )}
