@@ -9,6 +9,7 @@ import {
   Animated,
   Easing,
   Dimensions,
+  Linking,
   Modal,
   Alert,
 } from "react-native";
@@ -345,14 +346,20 @@ export default function RegisterForm() {
               <Text
                 className="underline"
                 style={{ color: theme.primary }}
-                onPress={() => setFlyoutVisible(true)}>
+                onPress={() =>
+                  Linking.openURL("http://ingredigo.net/terms-of-service")
+                }
+                suppressHighlighting>
                 Terms of Use
               </Text>{" "}
               and{" "}
               <Text
                 className="underline"
                 style={{ color: theme.primary }}
-                onPress={() => setFlyoutVisible(true)}>
+                onPress={() =>
+                  Linking.openURL("http://ingredigo.net/terms-of-service")
+                }
+                suppressHighlighting>
                 Privacy Policy
               </Text>
             </Text>
@@ -555,7 +562,7 @@ export default function RegisterForm() {
         </Animated.View>
       </View>
 
-      <Modal
+      {/* <Modal
         visible={flyoutVisible}
         style={{ margin: 0 }}
         presentationStyle="formSheet"
@@ -575,7 +582,7 @@ export default function RegisterForm() {
           </TouchableOpacity>
           <WebView
             source={{
-              uri: "https://ingredigo-compliancy.s3.us-east-1.amazonaws.com/terms_of_service.htm",
+              uri: "http://192.168.1.71:8080/terms-of-service",
             }}
             style={{
               backgroundColor: "transparent",
@@ -584,7 +591,7 @@ export default function RegisterForm() {
             }}
           />
         </SafeAreaView>
-      </Modal>
+      </Modal> */}
     </View>
   );
 }

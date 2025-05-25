@@ -71,6 +71,16 @@ export default function RecipeScreen() {
   const titleOpacity = useRef(new Animated.Value(1)).current;
   const scrollY = useRef(new Animated.Value(0)).current;
 
+  // Add new animated value for header shadow
+  const headerShadowOpacity = useRef(new Animated.Value(0)).current;
+
+  // Interpolate header shadow opacity based on scroll position
+  const headerShadow = headerShadowOpacity.interpolate({
+    inputRange: [0, 50, 100],
+    outputRange: [0, 0.3, 0.5],
+    extrapolate: "clamp",
+  });
+
   const headerTranslateY = scrollY.interpolate({
     inputRange: [0, 140],
     outputRange: [0, -20],
@@ -123,11 +133,17 @@ export default function RecipeScreen() {
     }
   };
 
+  // Update the handleScroll function to connect our new animated value
   const handleScroll = Animated.event(
     [{ nativeEvent: { contentOffset: { y: scrollY } } }],
     {
-      useNativeDriver: true,
-      listener: (event: NativeSyntheticEvent<NativeScrollEvent>) => {},
+      useNativeDriver: false, // Need to set to false since we're animating shadowOpacity
+      listener: (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+        // Get the current scroll position
+        const offsetY = event.nativeEvent.contentOffset.y;
+        // Update the shadow opacity animated value
+        headerShadowOpacity.setValue(offsetY);
+      },
     }
   );
 
@@ -446,6 +462,16 @@ export default function RecipeScreen() {
           top: 0,
           left: 0,
           right: 0,
+          // Add dynamic shadow based on scroll position
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: headerShadow,
+          shadowRadius: 3,
+          elevation: headerShadow.interpolate({
+            inputRange: [0, 0.5],
+            outputRange: [0, 4],
+            extrapolate: "clamp",
+          }),
         }}>
         <SafeAreaView>
           <StatusBar

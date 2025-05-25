@@ -64,8 +64,14 @@ public class AppleNotificationServiceImpl implements AppleNotificationService {
         subscription.setLastVerifiedAt(Instant.now());
         subscription.setExpirationDate(Instant.ofEpochMilli(transaction.getExpiresDate()));
 
+        if (renewalInfo == null) {
+            log.warn("No renewal info found for original transaction ID: {}", originalTransactionId);
+            return;
+        }
         if (renewalInfo != null) {
             subscription.setAutoRenew(renewalInfo.getAutoRenewStatus().getValue() == 1);
+            if (renewalInfo.getAutoRenewStatus().getValue() == 0) subscription.setCancellationDate(Instant.now());
+            else subscription.setCancellationDate(null);
         }
 
         NotificationTypeV2 type = notification.getNotificationType();
@@ -77,14 +83,23 @@ public class AppleNotificationServiceImpl implements AppleNotificationService {
                 subscription.setStatus("ACTIVE");
                 subscription.setTrial(false);
             }
-            case SUBSCRIBED -> subscription.setStatus("ACTIVE");
+            case SUBSCRIBED -> {
+                subscription.setStatus("ACTIVE");
+                subscription.setTrial(subType == Subtype.INITIAL_BUY);
+            }
             case DID_FAIL_TO_RENEW -> subscription.setStatus("BILLING_RETRY");
-            case EXPIRED, GRACE_PERIOD_EXPIRED -> subscription.setStatus("EXPIRED");
+            case EXPIRED, GRACE_PERIOD_EXPIRED -> {
+                subscription.setStatus("EXPIRED");
+                subscription.setTrial(false);
+            }
             case DID_CHANGE_RENEWAL_STATUS -> // Only update isAutoRenew — status stays the same
                     subscription.setAutoRenew(renewalInfo.getAutoRenewStatus().getValue() == 1);
             case DID_CHANGE_RENEWAL_PREF -> // Optional: notify user of changed productId
                     subscription.setProductId(renewalInfo.getAutoRenewProductId());
-            case REVOKE -> subscription.setStatus("REVOKED");
+            case REVOKE -> {
+                subscription.setStatus("REVOKED");
+                subscription.setTrial(false);
+            }
             default -> log.warn("Unhandled notification type: {}", type);
         }
 

@@ -1,4 +1,3 @@
-// ...existing code...
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
@@ -58,7 +57,9 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({
           </View>
         </MenuOption>
         <MenuOption
-          onSelect={onSubscription}
+          onSelect={() => {
+            router.push("/subscription-settings");
+          }}
           customStyles={{ optionText: styles.menuOptionText }}>
           <View style={styles.menuOption}>
             <Icon name="loyalty" size={20} color={Colors.light.text} />

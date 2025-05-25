@@ -43,7 +43,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**", "/api/webhook/**").permitAll()  // Allow public access for authentication
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/apple-app-site-association", "/.well-known/apple-app-site-association", "/.well-known/assetlinks.json").permitAll()
-                        .requestMatchers("/verify-email", "/images/logo.png", "images/favicon.ico", "images/favicon.ico").permitAll()
+                        .requestMatchers("/verify-email", "/terms-of-service", "/images/logo.png", "images/favicon.ico", "images/favicon.ico").permitAll()
                         .anyRequest().authenticated()
                 ).httpBasic(Customizer.withDefaults())
                 .exceptionHandling(exception -> exception

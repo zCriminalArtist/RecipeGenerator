@@ -47,11 +47,19 @@ public class SubscriptionController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No subscription found for the user.");
         }
 
-        Map<String, Object> response = Map.of("status", subscription.getStatus(),
-                "productId", subscription.getProductId(),
-                "expirationDate", subscription.getExpirationDate(),
-                "isAutoRenew", subscription.isAutoRenew(),
-                "isTrial", subscription.isTrial());
+        Map<String, Object> responseMap = new HashMap<>();
+        responseMap.put("status", subscription.getStatus());
+        responseMap.put("productId", subscription.getProductId());
+        responseMap.put("expirationDate", subscription.getExpirationDate());
+        responseMap.put("isAutoRenew", subscription.isAutoRenew());
+        responseMap.put("purchaseDate", subscription.getPurchaseDate());
+        responseMap.put("isTrial", subscription.isTrial());
+
+        if (subscription.getCancellationDate() != null) {
+            responseMap.put("cancellationDate", subscription.getCancellationDate());
+        }
+
+        Map<String, Object> response = Collections.unmodifiableMap(responseMap);
 
         return ResponseEntity.ok(response);
     }
