@@ -38,7 +38,6 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      {/* <DeepLinkHandler /> */}
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="account" options={{ headerShown: false }} />
@@ -46,8 +45,10 @@ export default function RootLayout() {
         <Stack.Screen name="onboarding" options={{ headerShown: false }} />
         <Stack.Screen name="forgot" options={{ headerShown: false }} />
         <Stack.Screen name="trial" options={{ headerShown: false }} />
-        <Stack.Screen name="trial-ended" options={{ headerShown: false }} />
-        <Stack.Screen name="subscription" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="subscription-settings"
+          options={{ headerShown: false }}
+        />
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar style="auto" />

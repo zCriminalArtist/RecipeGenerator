@@ -106,8 +106,8 @@ const IngredientContainer: React.FC<IngredientContainerProps> = ({
                       style={{
                         padding: 8,
                         height: "100%",
-                        borderTopLeftRadius: 4,
-                        borderBottomLeftRadius: 4,
+                        borderTopLeftRadius: 6,
+                        borderBottomLeftRadius: 6,
                         color: "#212121",
                         fontWeight: "600",
                         marginRight: 10,
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
   ingredientContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
-    paddingVertical: 20,
+    paddingVertical: 25,
   },
   ingredient: {
     flexDirection: "row",
@@ -160,12 +160,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#fDfDfD",
     padding: 0,
     margin: 4,
-    borderRadius: 5,
+    borderRadius: 6,
   },
   deleteButton: {
     marginLeft: 15,
     padding: 5,
-    borderRadius: 5,
+    borderRadius: 6,
     backgroundColor: "#fDfDfD",
   },
   gradientTop: {

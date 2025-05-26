@@ -79,7 +79,7 @@ export default function HomeScreen() {
 
   const measureIngredientContainer = (event: LayoutChangeEvent) => {
     const { height } = event.nativeEvent.layout;
-    setIngredientContainerHeight(height - 20);
+    setIngredientContainerHeight(height - 30);
   };
 
   useEffect(() => {
@@ -114,7 +114,6 @@ export default function HomeScreen() {
       if (token) {
         const decodedToken = jwtDecode(token);
         const username = (decodedToken as { username: string }).username;
-        console.log("Username:", username);
         if (username) {
           setUsername(username);
         }
@@ -197,10 +196,8 @@ export default function HomeScreen() {
       }, 100);
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 402) {
-        const { customerId, paymentIntentClientSecret } = error.response.data;
         router.push({
-          pathname: "/trial-ended",
-          params: { id: customerId, paymentIntent: paymentIntentClientSecret },
+          pathname: "/subscription-settings",
         });
       } else {
         Alert.alert("Error", "Error fetching recipes");
@@ -348,7 +345,6 @@ export default function HomeScreen() {
               <ProfileMenu
                 username={username}
                 onSignOut={handleSignOut}
-                onSubscription={() => router.push("/subscription")}
                 theme={theme}
               />
             </View>

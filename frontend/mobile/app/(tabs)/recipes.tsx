@@ -21,6 +21,7 @@ import api from "@/utils/api";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import ContentLoader, { Rect } from "react-content-loader/native";
 import Icon from "react-native-vector-icons/MaterialIcons";
+import { LinearGradient } from "expo-linear-gradient";
 
 interface Ingredient {
   id: number;
@@ -71,10 +72,8 @@ export default function RecipeScreen() {
   const titleOpacity = useRef(new Animated.Value(1)).current;
   const scrollY = useRef(new Animated.Value(0)).current;
 
-  // Add new animated value for header shadow
   const headerShadowOpacity = useRef(new Animated.Value(0)).current;
 
-  // Interpolate header shadow opacity based on scroll position
   const headerShadow = headerShadowOpacity.interpolate({
     inputRange: [0, 50, 100],
     outputRange: [0, 0.3, 0.5],
@@ -133,15 +132,12 @@ export default function RecipeScreen() {
     }
   };
 
-  // Update the handleScroll function to connect our new animated value
   const handleScroll = Animated.event(
     [{ nativeEvent: { contentOffset: { y: scrollY } } }],
     {
-      useNativeDriver: false, // Need to set to false since we're animating shadowOpacity
+      useNativeDriver: false,
       listener: (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-        // Get the current scroll position
         const offsetY = event.nativeEvent.contentOffset.y;
-        // Update the shadow opacity animated value
         headerShadowOpacity.setValue(offsetY);
       },
     }
@@ -261,6 +257,7 @@ export default function RecipeScreen() {
             },
           ],
         }}>
+        {/* Recipe header and description */}
         <TouchableOpacity
           activeOpacity={0.7}
           onPress={() => toggleRecipeExpansion(item.id, index)}
@@ -302,105 +299,235 @@ export default function RecipeScreen() {
           {item.description}
         </Animated.Text>
 
-        <Animated.Text
+        {/* Ingredients section with improved styling */}
+        <Animated.View
           style={{
-            color: theme.primaryText,
             opacity:
               animatedItem.opacity.interpolate({
                 inputRange: [0, 1],
                 outputRange: [0.5, 1],
               }) || 1,
           }}
-          className="font-semibold mb-2">
-          Ingredients
-        </Animated.Text>
-
-        <Animated.View
-          style={{
-            maxHeight: animatedItem.expanded.interpolate({
-              inputRange: [0, 1],
-              outputRange: ["0%", "1000%"],
-            }),
-            overflow: "hidden",
-            opacity:
-              animatedItem.opacity.interpolate({
-                inputRange: [0, 1],
-                outputRange: [0.4, 1],
-              }) || 1,
-          }}>
-          {item.recipeIngredients.map((recipeIngredient) => (
-            <View
-              key={recipeIngredient.id}
-              className="flex-row items-center ml-2.5 mb-1.5">
-              <Text className="my-1" style={{ color: theme.primaryText }}>
-                {recipeIngredient.ingredient.name.replace(
-                  /\b\w+/g,
-                  (word) =>
-                    word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-                )}
-              </Text>
-
-              <View className="absolute flex-row right-5 items-center">
-                <TextInput
-                  className="ml-2.5 pl-2 py-1 min-w-0 rounded-l-full"
-                  style={{
-                    color: theme.primaryText,
-                    backgroundColor: theme.secondaryText,
-                  }}
-                  placeholder="Quantity"
-                  value={
-                    editedIngredients[recipeIngredient.id]?.quantity ||
-                    recipeIngredient.quantity
-                  }
-                  onChangeText={(text) =>
-                    setEditedIngredients((prev) => ({
-                      ...prev,
-                      [recipeIngredient.id]: {
-                        quantity: text,
-                        unit:
-                          prev[recipeIngredient.id]?.unit ||
-                          recipeIngredient.unit,
-                      },
-                    }))
-                  }
-                />
-                <TextInput
-                  className="px-1 py-1 pr-2 min-w-0 rounded-r-full"
-                  style={{
-                    color: theme.primaryText,
-                    backgroundColor: theme.secondaryText,
-                  }}
-                  value={
-                    editedIngredients[recipeIngredient.id]?.unit ||
-                    recipeIngredient.unit
-                  }
-                  onChangeText={(text) =>
-                    setEditedIngredients((prev) => ({
-                      ...prev,
-                      [recipeIngredient.id]: {
-                        quantity:
-                          prev[recipeIngredient.id]?.quantity ||
-                          recipeIngredient.quantity,
-                        unit: text,
-                      },
-                    }))
-                  }
-                />
-                {editedIngredients[recipeIngredient.id] && (
-                  <TouchableOpacity
-                    className="ml-1.5"
-                    onPress={() => handleUpdate(recipeIngredient.id)}>
-                    <Icon name="save" size={20} color={theme.primaryText} />
-                  </TouchableOpacity>
-                )}
-              </View>
-            </View>
-          ))}
+          className="mb-2">
+          <View className="flex-row items-center">
+            <Icon name="restaurant" size={18} color={theme.primary} />
+            <Text
+              style={{
+                color: theme.primaryText,
+                fontFamily: "Montserrat_600SemiBold",
+              }}
+              className="font-semibold ml-2">
+              Ingredients
+            </Text>
+          </View>
         </Animated.View>
 
-        <Animated.Text
+        {/* Ingredients container with gradient overlay */}
+        <View className="relative mb-6">
+          <Animated.View
+            style={{
+              height: animatedItem.expanded.interpolate({
+                inputRange: [0, 1],
+                outputRange: [80, item.recipeIngredients.length * 50 - 30],
+              }),
+              overflow: "hidden",
+              opacity:
+                animatedItem.opacity.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0.4, 1],
+                }) || 1,
+            }}
+            className="p-2">
+            {item.recipeIngredients.map((recipeIngredient) => (
+              <View
+                key={recipeIngredient.id}
+                className="flex-row items-center py-2 border-b border-gray-200 dark:border-gray-700">
+                <View className="w-1.5 h-1.5 rounded-full bg-[#26A875] mr-2" />
+                <Text
+                  className="flex-1 text-sm"
+                  style={{
+                    color: theme.primaryText,
+                    fontFamily: "Montserrat_500Medium",
+                  }}>
+                  {recipeIngredient.ingredient.name.replace(
+                    /\b\w+/g,
+                    (word) =>
+                      word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                  )}
+                </Text>
+
+                <View className="flex-row items-center">
+                  <TextInput
+                    className="ml-2 px-3 py-1 rounded-l-md text-center min-w-[50px]"
+                    style={{
+                      color: theme.primaryText,
+                      backgroundColor:
+                        colorScheme === "dark" ? "#3A3F44" : "#E8ECF4",
+                      fontFamily: "Montserrat_400Regular",
+                      fontSize: 14,
+                    }}
+                    placeholder="Qty"
+                    value={
+                      editedIngredients[recipeIngredient.id]?.quantity !==
+                      undefined
+                        ? editedIngredients[recipeIngredient.id].quantity
+                        : recipeIngredient.quantity
+                    }
+                    onChangeText={(text) =>
+                      setEditedIngredients((prev) => ({
+                        ...prev,
+                        [recipeIngredient.id]: {
+                          quantity: text,
+                          unit:
+                            prev[recipeIngredient.id]?.unit !== undefined
+                              ? prev[recipeIngredient.id].unit
+                              : recipeIngredient.unit,
+                        },
+                      }))
+                    }
+                    onEndEditing={() => {
+                      const editedValue =
+                        editedIngredients[recipeIngredient.id]?.quantity;
+                      // Only update if the value is not empty
+                      if (editedValue !== undefined && editedValue !== "") {
+                        handleUpdate(recipeIngredient.id);
+                      } else if (editedValue === "") {
+                        // Reset to original value if empty
+                        setEditedIngredients((prev) => ({
+                          ...prev,
+                          [recipeIngredient.id]: {
+                            ...prev[recipeIngredient.id],
+                            quantity: recipeIngredient.quantity,
+                          },
+                        }));
+                      }
+                    }}
+                  />
+                  <TextInput
+                    className="px-3 py-1 rounded-r-md text-center min-w-[40px]"
+                    style={{
+                      color: theme.primaryText,
+                      backgroundColor:
+                        colorScheme === "dark" ? "#3A3F44" : "#E8ECF4",
+                      fontFamily: "Montserrat_400Regular",
+                      fontSize: 14,
+                      borderLeftWidth: 1,
+                      borderLeftColor:
+                        colorScheme === "dark" ? "#2C2F33" : "#D1D5DB",
+                    }}
+                    placeholder="Unit"
+                    value={
+                      editedIngredients[recipeIngredient.id]?.unit !== undefined
+                        ? editedIngredients[recipeIngredient.id].unit
+                        : recipeIngredient.unit
+                    }
+                    onChangeText={(text) =>
+                      setEditedIngredients((prev) => ({
+                        ...prev,
+                        [recipeIngredient.id]: {
+                          quantity:
+                            prev[recipeIngredient.id]?.quantity !== undefined
+                              ? prev[recipeIngredient.id].quantity
+                              : recipeIngredient.quantity,
+                          unit: text,
+                        },
+                      }))
+                    }
+                    onEndEditing={() => {
+                      const editedValue =
+                        editedIngredients[recipeIngredient.id]?.unit;
+                      // Only update if the value is not empty
+                      if (editedValue !== undefined && editedValue !== "") {
+                        handleUpdate(recipeIngredient.id);
+                      } else if (editedValue === "") {
+                        // Reset to original value if empty
+                        setEditedIngredients((prev) => ({
+                          ...prev,
+                          [recipeIngredient.id]: {
+                            ...prev[recipeIngredient.id],
+                            unit: recipeIngredient.unit,
+                          },
+                        }));
+                      }
+                    }}
+                  />
+                </View>
+              </View>
+            ))}
+          </Animated.View>
+
+          {/* Tappable gradient fade overlay */}
+          <TouchableOpacity
+            activeOpacity={1.0}
+            onPress={() => toggleRecipeExpansion(item.id, index)}
+            disabled={isExpanded}
+            style={{
+              position: "absolute",
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: 40,
+            }}>
+            <Animated.View
+              style={{
+                opacity: animatedItem.expanded.interpolate({
+                  inputRange: [0, 0.3, 1],
+                  outputRange: [1, 0, 0],
+                }),
+                height: "100%",
+                width: "100%",
+              }}>
+              <LinearGradient
+                colors={[
+                  colorScheme === "dark"
+                    ? "rgba(44, 47, 51, 0)"
+                    : "rgba(255, 255, 255, 0)",
+                  colorScheme === "dark"
+                    ? "rgba(44, 47, 51, 0.9)"
+                    : "rgba(255, 255, 255, 0.9)",
+                  colorScheme === "dark"
+                    ? "rgba(44, 47, 51, 1)"
+                    : "rgba(255, 255, 255, 1)",
+                ]}
+                style={{ height: 40 }}
+              />
+            </Animated.View>
+          </TouchableOpacity>
+        </View>
+
+        {/* Ellipses indicator for contracted state - Also tappable */}
+        {/* <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => toggleRecipeExpansion(item.id, index)}
+          disabled={isExpanded}>
+          <Animated.View
+            style={{
+              opacity: animatedItem.expanded.interpolate({
+                inputRange: [0, 0.3, 1],
+                outputRange: [1, 0, 0],
+              }),
+              height: animatedItem.expanded.interpolate({
+                inputRange: [0, 1],
+                outputRange: [30, 0],
+              }),
+              marginBottom: animatedItem.expanded.interpolate({
+                inputRange: [0, 1],
+                outputRange: [8, 0],
+              }),
+              paddingVertical: 5,
+            }}
+            className="flex-row justify-center items-center">
+            <View className="flex-row">
+              <View className="w-1.5 h-1.5 rounded-full bg-[#26A875] mx-0.5" />
+              <View className="w-1.5 h-1.5 rounded-full bg-[#26A875] mx-0.5" />
+              <View className="w-1.5 h-1.5 rounded-full bg-[#26A875] mx-0.5" />
+            </View>
+          </Animated.View>
+        </TouchableOpacity> */}
+
+        {/* Instructions section */}
+        <Animated.View
           style={{
-            color: theme.primaryText,
             opacity:
               animatedItem.opacity.interpolate({
                 inputRange: [0, 1],
@@ -408,29 +535,39 @@ export default function RecipeScreen() {
               }) || 1,
             marginTop: animatedItem.expanded.interpolate({
               inputRange: [0, 1],
-              outputRange: [3, 15],
+              outputRange: [3, 5],
             }),
           }}
-          className="font-semibold my-1.5">
-          Instructions
-        </Animated.Text>
+          className="mb-2">
+          <View className="flex-row items-center">
+            <Icon name="menu-book" size={18} color={theme.primary} />
+            <Text
+              style={{
+                color: theme.primaryText,
+                fontFamily: "Montserrat_600SemiBold",
+              }}
+              className="font-semibold ml-2">
+              Instructions
+            </Text>
+          </View>
+        </Animated.View>
 
+        {/* Instructions container - UPDATED */}
         <Animated.View
           style={{
-            maxHeight: animatedItem.height.interpolate({
-              inputRange: [0.5, 1],
-              outputRange: ["50%", "100%"],
-            }),
+            overflow: "hidden",
             opacity:
               animatedItem.opacity.interpolate({
                 inputRange: [0, 1],
                 outputRange: [0.4, 1],
               }) || 1,
-          }}>
+          }}
+          className="p-3 mb-2">
           {renderInstructions(item.instructions)}
         </Animated.View>
 
-        <View className="flex-row justify-end items-center mt-3">
+        {/* Action buttons */}
+        <View className="flex-row justify-end items-center mt-4">
           <TouchableOpacity
             className="p-2 rounded-full bg-gray-400 dark:bg-gray-600 mr-3"
             onPress={() => handleDeleteRecipe(item.id)}>
@@ -539,7 +676,7 @@ export default function RecipeScreen() {
 
       <View className="flex-1 mt-[120px]">
         {isLoading ? (
-          <View className="p-6 w-full">
+          <View className="p-6 pt-20 w-full">
             <ContentLoader
               speed={1}
               width="100%"
@@ -565,6 +702,8 @@ export default function RecipeScreen() {
           />
         )}
       </View>
+      <View className="h-[80px]" />
+      {/* Extra space to push content above the bottom tab bar */}
     </View>
   );
 }

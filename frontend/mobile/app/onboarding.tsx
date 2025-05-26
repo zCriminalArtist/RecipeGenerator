@@ -180,8 +180,16 @@ export default function OnboardingScreen() {
         <View
           style={{
             padding: 20,
-            borderTopWidth: 2,
-            borderColor: theme.divider,
+            borderTopWidth: 1,
+            borderTopColor: colorScheme === "dark" ? theme.divider : "#F5F5F5",
+            shadowColor: colorScheme === "dark" ? "#000" : "#888",
+            shadowOffset: { width: 0, height: -6 },
+            shadowOpacity: 0.2,
+            shadowRadius: 6,
+            elevation: 5,
+            backgroundColor: theme.background,
+            position: "relative",
+            zIndex: 10,
           }}>
           <Animated.View entering={FadeIn.duration(600)}>
             <TouchableOpacity
@@ -201,17 +209,7 @@ export default function OnboardingScreen() {
                       opacity: 1,
                     },
               ]}
-              onPress={
-                currentStep === QUESTIONS.length + 1
-                  ? () => {
-                      StoreReview.requestReview();
-                      setTimeout(() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                        setCurrentStep(currentStep + 1);
-                      }, 3000);
-                    }
-                  : handleContinue
-              }
+              onPress={handleContinue}
               disabled={
                 currentStep > 0 &&
                 currentStep <= QUESTIONS.length &&

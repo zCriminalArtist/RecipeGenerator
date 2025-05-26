@@ -32,7 +32,6 @@ export default function TabLayout() {
     setIsLoading(true);
     try {
       const token = await AsyncStorage.getItem("jwt");
-      console.log("Token:", token);
 
       if (!token) {
         setIsAuthenticated(false);

@@ -178,16 +178,35 @@ export function TrialFeatures({
           backgroundColor: theme.background,
           borderTopWidth: 1,
           borderTopColor: colorScheme === "dark" ? theme.divider : "#F5F5F5",
+          shadowColor: colorScheme === "dark" ? "#000" : "#888",
+          shadowOffset: { width: 0, height: -6 },
+          shadowOpacity: 0.2,
+          shadowRadius: 6,
+          elevation: 5,
+          position: "relative",
+          zIndex: 10,
         }}>
         <View className="items-center mb-6">
-          <Text
-            className="text-lg text-center mb-2"
-            style={{
-              color: theme.primaryText,
-              fontFamily: "Montserrat_600SemiBold",
-            }}>
-            ✓ No Payment Due Now
-          </Text>
+          <View className="flex-row items-center justify-center mb-2">
+            <View className="mr-2 w-5 h-5 rounded-full bg-[#26A87530] items-center justify-center">
+              <Text
+                style={{
+                  color: theme.primary,
+                  fontSize: 12,
+                  fontWeight: "bold",
+                }}>
+                ✓
+              </Text>
+            </View>
+            <Text
+              className="text-lg text-center"
+              style={{
+                color: theme.primaryText,
+                fontFamily: "Montserrat_600SemiBold",
+              }}>
+              No Payment Due Now
+            </Text>
+          </View>
           <Text
             className="text-base text-center"
             style={{

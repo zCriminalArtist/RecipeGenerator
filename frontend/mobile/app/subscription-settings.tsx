@@ -13,7 +13,7 @@ import {
   Animated,
   useColorScheme,
 } from "react-native";
-import { Stack, router } from "expo-router";
+import { Link, Stack, router } from "expo-router";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { Colors, darkTheme, lightTheme } from "@/constants/Colors";
 import api from "@/utils/api";
@@ -22,6 +22,8 @@ interface SubscriptionData {
   status: string;
   expirationDate: string; // Next billing date
   purchaseDate: string;
+  isTrial: boolean;
+  isAutoRenew: boolean;
   cancellationDate?: string;
   platform?: string;
 }
@@ -101,54 +103,68 @@ export default function SubscriptionSettingsScreen() {
     });
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string, isTrial: boolean) => {
+    if (isTrial) return "#FFB74D"; // Orange for trial
+
     switch (status?.toLowerCase()) {
       case "active":
         return "#26A875"; // Green
       case "canceled":
       case "cancelled":
-        return "#e53935"; // Red
-      case "trial":
-        return "#FFB74D"; // Orange
+      case "expired":
+        return colorScheme === "dark" ? "#ff6b6b" : "#e53935"; // Red
       default:
         return theme.secondaryText;
     }
   };
 
-  const getStatusIcon = (status: string) => {
+  const getStatusIcon = (status: string, isTrial: boolean) => {
+    if (isTrial) return "av-timer"; // Timer icon for trial
+
     switch (status?.toLowerCase()) {
       case "active":
         return "check-circle";
       case "canceled":
       case "cancelled":
+      case "expired":
         return "cancel";
-      case "trial":
-        return "av-timer";
       default:
         return "help";
     }
   };
 
-  const formatInfoRow = (label: string, value: string) => (
-    <View className="flex-row justify-between items-center py-4 border-b border-gray-200 dark:border-gray-700">
-      <Text
-        className="text-base"
-        style={{
-          color: theme.primaryText,
-          fontFamily: "Montserrat_500Medium",
-        }}>
-        {label}
-      </Text>
-      <Text
-        className="text-base"
-        style={{
-          color: theme.secondaryText,
-          fontFamily: "Montserrat_400Regular",
-        }}>
-        {value}
-      </Text>
-    </View>
-  );
+  const getStatusText = (status: string, isTrial: boolean) => {
+    if (isTrial) return "Trial";
+
+    return status.charAt(0).toUpperCase() + status.slice(1);
+  };
+
+  const formatInfoRow = (label: string, value: string | boolean) => {
+    // Handle boolean values specially
+    const displayValue =
+      typeof value === "boolean" ? (value ? "Yes" : "No") : value;
+
+    return (
+      <View className="flex-row justify-between items-center py-4 border-b border-gray-200 dark:border-gray-700">
+        <Text
+          className="text-base"
+          style={{
+            color: theme.primaryText,
+            fontFamily: "Montserrat_500Medium",
+          }}>
+          {label}
+        </Text>
+        <Text
+          className="text-base"
+          style={{
+            color: theme.secondaryText,
+            fontFamily: "Montserrat_400Regular",
+          }}>
+          {displayValue}
+        </Text>
+      </View>
+    );
+  };
 
   return (
     <SafeAreaView
@@ -178,7 +194,6 @@ export default function SubscriptionSettingsScreen() {
       />
 
       <ScrollView className="flex-1">
-        {/* Header Section */}
         <Animated.View
           className="px-6 pt-6 pb-8"
           style={{
@@ -193,10 +208,16 @@ export default function SubscriptionSettingsScreen() {
                 <View
                   className="h-20 w-20 rounded-full items-center justify-center mb-2"
                   style={{
-                    backgroundColor: getStatusColor(subscriptionData.status),
+                    backgroundColor: getStatusColor(
+                      subscriptionData.status,
+                      subscriptionData.isTrial
+                    ),
                   }}>
                   <Icon
-                    name={getStatusIcon(subscriptionData.status)}
+                    name={getStatusIcon(
+                      subscriptionData.status,
+                      subscriptionData.isTrial
+                    )}
                     size={40}
                     color="white"
                   />
@@ -207,21 +228,33 @@ export default function SubscriptionSettingsScreen() {
                     color: "#8BDBC1",
                     fontFamily: "Montserrat_700Bold",
                   }}>
-                  {subscriptionData.status.charAt(0).toUpperCase() +
-                    subscriptionData.status.slice(1)}{" "}
+                  {getStatusText(
+                    subscriptionData.status,
+                    subscriptionData.isTrial
+                  )}{" "}
                   Subscription
                 </Text>
                 <Text
                   className="text-center opacity-70"
                   style={{
-                    color: theme.primaryText,
+                    color: theme.secondaryText,
                     fontFamily: "Montserrat_400Regular",
                   }}>
                   {subscriptionData.cancellationDate
                     ? `Your subscription will end on ${formatDate(
                         subscriptionData.expirationDate
                       )}`
-                    : `Your subscription is currently active`}
+                    : subscriptionData.isTrial
+                    ? `Your trial ends on ${formatDate(
+                        subscriptionData.expirationDate
+                      )}`
+                    : subscriptionData.isAutoRenew
+                    ? `Auto-renews on ${formatDate(
+                        subscriptionData.expirationDate
+                      )}`
+                    : `Your subscription is active until ${formatDate(
+                        subscriptionData.expirationDate
+                      )}`}
                 </Text>
               </View>
             ) : !isLoading ? (
@@ -266,11 +299,17 @@ export default function SubscriptionSettingsScreen() {
                 </Text>
                 {formatInfoRow(
                   "Status",
-                  subscriptionData.status.charAt(0).toUpperCase() +
-                    subscriptionData.status.slice(1)
+                  getStatusText(
+                    subscriptionData.status,
+                    subscriptionData.isTrial
+                  )
                 )}
+                {formatInfoRow("Trial Subscription", subscriptionData.isTrial)}
+                {formatInfoRow("Auto-Renewal", subscriptionData.isAutoRenew)}
                 {formatInfoRow(
-                  "Next Billing Date",
+                  subscriptionData.isTrial
+                    ? "Trial Ends On"
+                    : "Next Billing Date",
                   formatDate(subscriptionData.expirationDate)
                 )}
                 {formatInfoRow(
@@ -286,10 +325,9 @@ export default function SubscriptionSettingsScreen() {
                   formatInfoRow("Platform", subscriptionData.platform)}
               </View>
 
-              {/* Manage Subscription Button */}
-              <View className="bg-white dark:bg-[#2C2F33] rounded-xl p-4 shadow-sm mb-6">
+              <View className="flex-1 bg-white dark:bg-[#2C2F33] rounded-xl p-4 shadow-sm mb-6">
                 <Text
-                  className="text-lg mb-4"
+                  className="text-lg mb-6"
                   style={{
                     color: theme.primaryText,
                     fontFamily: "Montserrat_600SemiBold",
@@ -298,14 +336,23 @@ export default function SubscriptionSettingsScreen() {
                 </Text>
 
                 <Text
-                  className="mb-4"
+                  className="flex-1 mb-6"
                   style={{
                     color: theme.secondaryText,
                     fontFamily: "Montserrat_400Regular",
+                    wordWrap: "wrap",
+                    textAlign: "center",
+                    flexWrap: "wrap",
                   }}>
-                  To modify or cancel your subscription, you'll need to visit
-                  your {Platform.OS === "ios" ? "App Store" : "Play Store"}{" "}
-                  account settings.
+                  {subscriptionData.isTrial
+                    ? `Your trial will ${
+                        subscriptionData.isAutoRenew
+                          ? "automatically convert to a paid subscription"
+                          : "expire"
+                      } on ${formatDate(subscriptionData.expirationDate)}.`
+                    : `To modify or cancel your subscription, you'll need to visit your ${
+                        Platform.OS === "ios" ? "App Store" : "Play Store"
+                      } account settings.`}
                 </Text>
 
                 <TouchableOpacity
@@ -314,8 +361,11 @@ export default function SubscriptionSettingsScreen() {
                   <Text
                     className="text-white font-medium text-center"
                     style={{ fontFamily: "Montserrat_500Medium" }}>
-                    Manage Subscription in{" "}
-                    {Platform.OS === "ios" ? "App Store" : "Play Store"}
+                    {subscriptionData.isTrial && !subscriptionData.isAutoRenew
+                      ? "Upgrade to Full Subscription"
+                      : `Manage Subscription in ${
+                          Platform.OS === "ios" ? "App Store" : "Play Store"
+                        }`}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -330,24 +380,51 @@ export default function SubscriptionSettingsScreen() {
                   Frequently Asked Questions
                 </Text>
 
-                <View className="mt-2 mb-3">
+                {subscriptionData.isTrial && (
+                  <View className="mt-2 mb-3">
+                    <Text
+                      className="mb-1 text-base"
+                      style={{
+                        color: theme.primaryText,
+                        fontFamily: "Montserrat_500Medium",
+                      }}>
+                      What happens when my trial ends?
+                    </Text>
+                    <Text
+                      style={{
+                        color: theme.secondaryText,
+                        fontFamily: "Montserrat_400Regular",
+                      }}>
+                      {subscriptionData.isAutoRenew
+                        ? "Your trial will automatically convert to a paid subscription when it ends. You can cancel anytime before then to avoid being charged."
+                        : "Your trial will expire on the end date and you'll need to subscribe to continue using premium features."}
+                    </Text>
+                  </View>
+                )}
+
+                <View
+                  className={subscriptionData.isTrial ? "mb-3" : "mt-2 mb-3"}>
                   <Text
                     className="mb-1 text-base"
                     style={{
                       color: theme.primaryText,
                       fontFamily: "Montserrat_500Medium",
                     }}>
-                    How do I cancel my subscription?
+                    How do I{" "}
+                    {subscriptionData.isAutoRenew ? "turn off" : "enable"}{" "}
+                    auto-renewal?
                   </Text>
                   <Text
                     style={{
                       color: theme.secondaryText,
                       fontFamily: "Montserrat_400Regular",
                     }}>
-                    You can cancel anytime through your{" "}
-                    {Platform.OS === "ios" ? "App Store" : "Play Store"}{" "}
-                    account. Your benefits will continue until the end of your
-                    billing period.
+                    You can manage auto-renewal through your{" "}
+                    {Platform.OS === "ios" ? "App Store" : "Play Store"} account
+                    settings.{" "}
+                    {subscriptionData.isAutoRenew
+                      ? "Turning it off will let your subscription run until the end date without renewing."
+                      : "Enabling it ensures uninterrupted service."}
                   </Text>
                 </View>
 
@@ -412,7 +489,11 @@ export default function SubscriptionSettingsScreen() {
               </Text>
               <TouchableOpacity
                 className="mt-4 bg-[#26A875] py-2 px-6 rounded-md"
-                onPress={() => router.push("/subscription")}>
+                onPress={() => {
+                  Linking.openURL(
+                    "https://apps.apple.com/account/subscriptions"
+                  );
+                }}>
                 <Text
                   className="text-white font-medium"
                   style={{ fontFamily: "Montserrat_500Medium" }}>

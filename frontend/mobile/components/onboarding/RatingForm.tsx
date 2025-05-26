@@ -1,4 +1,10 @@
-import { StyleSheet, useColorScheme, View } from "react-native";
+import {
+  StyleSheet,
+  useColorScheme,
+  View,
+  Text,
+  TouchableOpacity,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, {
   FadeIn,
@@ -8,6 +14,7 @@ import Animated, {
   useAnimatedStyle,
   interpolateColor,
   useSharedValue,
+  BounceIn,
 } from "react-native-reanimated";
 import React, { useEffect, useState } from "react";
 import * as StoreReview from "expo-store-review";
@@ -15,6 +22,7 @@ import { darkTheme, lightTheme } from "@/constants/Colors";
 
 export function RatingForm() {
   const [rating, setRating] = useState(0);
+  const [hasInteracted, setHasInteracted] = useState(false);
   const star1 = useSharedValue(0);
   const star2 = useSharedValue(0);
   const star3 = useSharedValue(0);
@@ -41,13 +49,46 @@ export function RatingForm() {
     }, delay);
   }, []);
 
+  const handleStarPress = (selectedRating: number) => {
+    setRating(selectedRating);
+    setHasInteracted(true);
+
+    // Animate the selected star and previous stars
+    animatedStars.forEach((star, index) => {
+      if (index < selectedRating) {
+        star.value = withSequence(
+          withSpring(1.3, { damping: 6 }),
+          withSpring(1, { damping: 6 })
+        );
+      }
+    });
+  };
+
+  const getFeedbackText = () => {
+    if (!hasInteracted) return "";
+    if (rating <= 2) return "We're constantly improving!";
+    if (rating === 3) return "Thanks for your feedback!";
+    if (rating === 4) return "Awesome! We're glad you like it!";
+    return "Fantastic! Would you mind leaving a review?";
+  };
+
   return (
     <View style={styles.ratingContainer}>
-      <Animated.Text
+      <Animated.View
         entering={FadeIn.duration(600)}
-        style={[styles.ratingTitle, { color: theme.primaryText }]}>
-        Give me a rating
-      </Animated.Text>
+        style={styles.headerContainer}>
+        <Animated.Text
+          entering={BounceIn.duration(800)}
+          style={[styles.ratingTitle, { color: theme.primaryText }]}>
+          LOVE THE APP?
+        </Animated.Text>
+        <Animated.Text
+          entering={FadeIn.duration(600).delay(400)}
+          style={[styles.ratingSubheader, { color: theme.secondaryText }]}>
+          Let us know how we're doing!
+        </Animated.Text>
+      </Animated.View>
+
       <Animated.View
         entering={FadeInDown.duration(600).delay(300)}
         style={styles.starsContainer}>
@@ -67,55 +108,51 @@ export function RatingForm() {
           }));
 
           return (
-            <Animated.View
+            <TouchableOpacity
               key={star}
-              entering={FadeInDown.duration(600).delay(300 + index * 100)}>
-              <Animated.View style={[styles.starButton, animatedStyle]}>
-                <Animated.View style={animatedColor}>
-                  <Ionicons
-                    name={rating >= star ? "star" : "star-outline"}
-                    size={40}
-                    color={rating >= star ? "#FF9800" : "#D1D1D1"}
-                  />
+              onPress={() => handleStarPress(star)}
+              activeOpacity={0.7}>
+              <Animated.View
+                entering={FadeInDown.duration(600).delay(300 + index * 100)}>
+                <Animated.View style={[styles.starButton, animatedStyle]}>
+                  <Animated.View style={animatedColor}>
+                    <Ionicons
+                      name={rating >= star ? "star" : "star-outline"}
+                      size={48}
+                      color={rating >= star ? "#FFC107" : "#D1D1D1"}
+                    />
+                  </Animated.View>
                 </Animated.View>
               </Animated.View>
-            </Animated.View>
+            </TouchableOpacity>
           );
         })}
       </Animated.View>
-      <Animated.Text
-        entering={FadeInDown.duration(600).delay(600)}
-        style={[styles.ratingSubtitle, { color: theme.secondaryText }]}>
-        Made for people like you
-      </Animated.Text>
-      <Animated.View
-        entering={FadeInDown.duration(600).delay(800)}
-        style={styles.avatarsContainer}>
-        <View style={styles.avatarWrapper}>
-          <Animated.Image
-            source={require("@/assets/images/avatars/1.png")}
-            style={styles.avatarImage}
-          />
-        </View>
-        <View style={[styles.avatarWrapper, { marginLeft: -15 }]}>
-          <Animated.Image
-            source={require("@/assets/images/avatars/2.png")}
-            style={styles.avatarImage}
-          />
-        </View>
-        <View style={[styles.avatarWrapper, { marginLeft: -15 }]}>
-          <Animated.Image
-            source={require("@/assets/images/avatars/3.png")}
-            style={styles.avatarImage}
-          />
-        </View>
-        <View style={[styles.avatarWrapper, { marginLeft: -15 }]}>
-          <Animated.Image
-            source={require("@/assets/images/avatars/4.png")}
-            style={styles.avatarImage}
-          />
-        </View>
-      </Animated.View>
+
+      {hasInteracted && (
+        <Animated.Text
+          entering={FadeIn.duration(400)}
+          style={[
+            styles.feedbackText,
+            {
+              color: rating >= 4 ? "#26A875" : theme.secondaryText,
+            },
+          ]}>
+          {getFeedbackText()}
+        </Animated.Text>
+      )}
+
+      {rating >= 4 && hasInteracted && (
+        <Animated.View
+          entering={FadeIn.duration(600)}
+          style={styles.reviewButtonContainer}>
+          <TouchableOpacity
+            style={[styles.reviewButton, { backgroundColor: theme.primary }]}
+            onPress={() => StoreReview.requestReview()}>
+            <Text style={styles.reviewButtonText}>Rate on App Store</Text>
+          </TouchableOpacity>
+        </Animated.View>
+      )}
     </View>
   );
 }
@@ -127,27 +164,62 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 32,
   },
-  ratingTitle: {
-    fontSize: 32,
-    fontWeight: "bold",
-    textAlign: "center",
+  headerContainer: {
+    alignItems: "center",
     marginBottom: 40,
+  },
+  ratingTitle: {
+    fontSize: 36,
+    fontWeight: "900",
+    textAlign: "center",
+    letterSpacing: 1,
+    marginBottom: 12,
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
+    textShadowColor: "rgba(0, 0, 0, 0.2)",
+  },
+  ratingSubheader: {
+    fontSize: 18,
+    textAlign: "center",
+    fontWeight: "500",
   },
   starsContainer: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    gap: 8,
-    marginBottom: 40,
+    gap: 12,
+    marginBottom: 32,
   },
   starButton: {
     padding: 8,
   },
-  ratingSubtitle: {
+  feedbackText: {
     fontSize: 18,
     textAlign: "center",
-    color: "#666",
-    lineHeight: 26,
+    fontWeight: "600",
+    marginBottom: 24,
+  },
+  reviewButtonContainer: {
+    width: "100%",
+    alignItems: "center",
+    marginTop: 16,
+  },
+  reviewButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 50,
+    minWidth: 200,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  reviewButtonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "700",
   },
   avatarsContainer: {
     flexDirection: "row",

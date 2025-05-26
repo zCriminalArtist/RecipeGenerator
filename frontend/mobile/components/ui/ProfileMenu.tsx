@@ -13,7 +13,6 @@ import { router } from "expo-router";
 interface ProfileMenuProps {
   username: string;
   onSignOut: () => void;
-  onSubscription: () => void;
   theme: {
     primaryText: string;
     primary: string;
@@ -24,7 +23,6 @@ interface ProfileMenuProps {
 const ProfileMenu: React.FC<ProfileMenuProps> = ({
   username,
   onSignOut,
-  onSubscription,
   theme,
 }) => {
   return (

@@ -13,6 +13,7 @@ import {
   Platform,
   Animated,
   useColorScheme,
+  Linking,
 } from "react-native";
 import { Stack, router } from "expo-router";
 import Icon from "react-native-vector-icons/MaterialIcons";
@@ -38,14 +39,12 @@ export default function AccountSettingsScreen() {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? darkTheme : lightTheme;
 
-  // Animation values
   const headerOpacity = React.useRef(new Animated.Value(0)).current;
   const contentOpacity = React.useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     fetchUserData();
 
-    // Animate header and content on mount
     Animated.sequence([
       Animated.timing(headerOpacity, {
         toValue: 1,
@@ -90,7 +89,6 @@ export default function AccountSettingsScreen() {
         lastName: editableData.lastName,
       });
 
-      // Update userData with new values
       setUserData((prev) => {
         if (!prev) return null;
         return {
@@ -118,6 +116,32 @@ export default function AccountSettingsScreen() {
       Alert.alert("Signed Out", "You have been signed out successfully.");
     } catch (error) {
       console.error("Error signing out:", error);
+    }
+  };
+
+  const openPolicy = async (policyType: "terms" | "privacy") => {
+    const url =
+      policyType === "terms"
+        ? "https://ingredigo.net/terms-of-service"
+        : "https://ingredigo.net/privacy-policy";
+
+    try {
+      const canOpen = await Linking.canOpenURL(url);
+
+      if (canOpen) {
+        await Linking.openURL(url);
+      } else {
+        Alert.alert(
+          "Cannot Open Link",
+          `Unable to open ${
+            policyType === "terms" ? "Terms of Use" : "Privacy Policy"
+          }. Please visit ingredigo.net directly.`,
+          [{ text: "OK" }]
+        );
+      }
+    } catch (error) {
+      console.error(`Error opening ${policyType} policy:`, error);
+      Alert.alert("Error", "There was a problem opening the page");
     }
   };
 
@@ -196,7 +220,6 @@ export default function AccountSettingsScreen() {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         className="flex-1">
         <ScrollView className="flex-1">
-          {/* Header Section */}
           <Animated.View
             className="px-6 pt-6 pb-8"
             style={{
@@ -351,7 +374,7 @@ export default function AccountSettingsScreen() {
 
                     <TouchableOpacity
                       className="bg-[#26A875] py-2 px-4 rounded-md mt-3 self-end"
-                      onPress={() => router.replace("/subscription")}>
+                      onPress={() => router.push("/subscription-settings")}>
                       <Text
                         className="text-white font-medium"
                         style={{ fontFamily: "Montserrat_500Medium" }}>
@@ -360,6 +383,64 @@ export default function AccountSettingsScreen() {
                     </TouchableOpacity>
                   </View>
                 )}
+
+                {/* New Policy Section */}
+                <View className="bg-white dark:bg-[#2C2F33] rounded-xl p-4 shadow-sm mb-6">
+                  <Text
+                    className="text-lg mb-2"
+                    style={{
+                      color: theme.primaryText,
+                      fontFamily: "Montserrat_600SemiBold",
+                    }}>
+                    Legal & Policies
+                  </Text>
+
+                  <TouchableOpacity
+                    className="flex-row justify-between items-center py-3 border-b border-gray-200 dark:border-gray-700"
+                    onPress={() => openPolicy("terms")}>
+                    <Text
+                      className="text-base"
+                      style={{
+                        color: theme.primaryText,
+                        fontFamily: "Montserrat_500Medium",
+                      }}>
+                      Terms of Use
+                    </Text>
+                    <Icon
+                      name="chevron-right"
+                      size={24}
+                      color={theme.secondaryText}
+                    />
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    className="flex-row justify-between items-center py-3 border-b border-gray-200 dark:border-gray-700"
+                    onPress={() => openPolicy("privacy")}>
+                    <Text
+                      className="text-base"
+                      style={{
+                        color: theme.primaryText,
+                        fontFamily: "Montserrat_500Medium",
+                      }}>
+                      Privacy Policy
+                    </Text>
+                    <Icon
+                      name="chevron-right"
+                      size={24}
+                      color={theme.secondaryText}
+                    />
+                  </TouchableOpacity>
+
+                  <Text
+                    className="text-sm mt-3"
+                    style={{
+                      color: theme.secondaryText,
+                      fontFamily: "Montserrat_400Regular",
+                    }}>
+                    By using this app, you agree to our Terms of Use and
+                    acknowledge our Privacy Policy.
+                  </Text>
+                </View>
 
                 <TouchableOpacity
                   className="bg-[#f8f8f8] dark:bg-[#222] py-3 px-4 rounded-xl mb-6 flex-row items-center justify-center"
