@@ -37,7 +37,7 @@ public class RecipeController {
     private RecipeIngredientService recipeIngredientService;
 
     @GetMapping
-    public ResponseEntity<?> getRecipes(@AuthenticationPrincipal(errorOnInvalidType=true) User user, HttpServletRequest request) {
+    public ResponseEntity<?> getRecipes(@AuthenticationPrincipal(errorOnInvalidType = true) User user, HttpServletRequest request) {
         String rawQuery = request.getQueryString();
         if (rawQuery == null || !rawQuery.contains("ingredients=")) {
             List<Recipe> allRecipes = recipeService.getRecipesByUser(user);
@@ -55,11 +55,11 @@ public class RecipeController {
                 case "REVOKED" -> {
                     return ResponseEntity.status(HttpServletResponse.SC_PAYMENT_REQUIRED).body("Subscription revoked. Please contact support.");
                 }
-                default -> {}
+                default -> {
+                }
             }
 
             String ingredients = rawQuery.substring(rawQuery.indexOf("ingredients=") + "ingredients=".length());
-            System.out.println(ingredients);
             List<String> ingredientsList = Arrays.stream(ingredients.split(","))
                     .map(ingredient -> URLDecoder.decode(ingredient, StandardCharsets.UTF_8))
                     .collect(Collectors.toList());
@@ -69,17 +69,21 @@ public class RecipeController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Recipe> getRecipeById(@PathVariable int id) {
-        Recipe recipe = recipeService.getRecipeById(id);
+    public ResponseEntity<Recipe> getRecipeById(@AuthenticationPrincipal(errorOnInvalidType = true) User user, @PathVariable int id) {
+        Recipe recipe = recipeService.getRecipeById(user, id);
         return (recipe != null)
                 ? new ResponseEntity<>(recipe, HttpStatus.OK)
                 : new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteRecipe(@PathVariable int id) {
-        return recipeService.removeRecipe(id)
-                ? ResponseEntity.noContent().build()
-                : ResponseEntity.notFound().build();
+    public ResponseEntity<Void> deleteRecipe(@AuthenticationPrincipal(errorOnInvalidType = true) User user, @PathVariable int id) {
+        recipeService.deleteRecipe(user, id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @PostMapping("/{id}/favorite")
+    public ResponseEntity<Recipe> toggleFavorite(@AuthenticationPrincipal(errorOnInvalidType = true) User user, @PathVariable int id) {
+        return ResponseEntity.ok(recipeService.toggleFavorite(user, id));
     }
 }

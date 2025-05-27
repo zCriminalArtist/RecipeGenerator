@@ -46,6 +46,8 @@ public class Recipe {
     @JsonManagedReference
     private List<RecipeIngredient> recipeIngredients;
 
+    private boolean favorite = false;
+
     @Getter
     @Setter
     @ManyToOne

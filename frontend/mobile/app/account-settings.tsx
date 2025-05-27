@@ -194,7 +194,7 @@ export default function AccountSettingsScreen() {
       style={{ backgroundColor: theme.background }}
       className="flex-1">
       <StatusBar
-        barStyle={colorScheme === "dark" ? "light-content" : "dark-content"}
+        barStyle={colorScheme === "dark" ? "light-content" : "light-content"}
         backgroundColor={theme.background}
       />
       <Stack.Screen

@@ -9,6 +9,7 @@ import com.matthew.RecipeGenerator.Repo.IngredientRepo;
 import com.matthew.RecipeGenerator.Repo.RecipeRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -85,8 +86,10 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
-    public Recipe getRecipeById(int id) {
-        return recipeRepo.findById(id).orElse(null);
+    @Transactional(readOnly = true)
+    public Recipe getRecipeById(User user, Integer id) {
+        return recipeRepo.findByIdAndUser(id, user)
+                .orElseThrow(() -> new RuntimeException("Recipe not found or doesn't belong to current user"));
     }
 
     @Override
@@ -100,17 +103,15 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
-    public boolean removeRecipe(int id) {
-        if (recipeRepo.existsById(id)) {
-            recipeRepo.deleteById(id);
-            return true;
-        }
-        return false;
+    @Transactional
+    public void deleteRecipe(User user, Integer id) {
+        Recipe recipe = getRecipeById(user, id);
+        recipeRepo.delete(recipe);
     }
 
     @Override
-    public Recipe updateRecipe(int id, Recipe updatedRecipe) {
-        Recipe existingRecipe = recipeRepo.findById(id).orElse(null);
+    public Recipe updateRecipe(User user, Integer id, Recipe updatedRecipe) {
+        Recipe existingRecipe = recipeRepo.findByIdAndUser(id, user).orElse(null);
         if (existingRecipe == null) return null;
 
         existingRecipe.setName(updatedRecipe.getName());
@@ -122,5 +123,13 @@ public class RecipeServiceImpl implements RecipeService {
     @Override
     public List<Recipe> getRecipesByUser(User user) {
         return recipeRepo.findByUser(user);
+    }
+
+    @Override
+    @Transactional
+    public Recipe toggleFavorite(User user, Integer id) {
+        Recipe recipe = getRecipeById(user, id);
+        recipe.setFavorite(!recipe.isFavorite());
+        return recipeRepo.save(recipe);
     }
 }

@@ -11,12 +11,13 @@ import java.util.Optional;
 public interface RecipeService {
 
     List<Recipe> getAllRecipes();
-    Recipe getRecipeById(int id);
+    Recipe getRecipeById(User user, Integer id);
     List<Recipe> createRecipesFromAIResponse(JsonNode aiResponse, User user);
     Optional<Recipe> getRecipeByName(String name);
     Recipe addRecipe(Recipe recipe);
-    boolean removeRecipe(int id);
-    Recipe updateRecipe(int id, Recipe updatedRecipe);
+    void deleteRecipe(User user, Integer id);
+    Recipe updateRecipe(User user, Integer id, Recipe updatedRecipe);
     List<Recipe> getRecipesByUser(User user);
+    Recipe toggleFavorite(User user, Integer id);
 
 }

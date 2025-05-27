@@ -171,7 +171,7 @@ export default function SubscriptionSettingsScreen() {
       style={{ backgroundColor: theme.background }}
       className="flex-1">
       <StatusBar
-        barStyle={colorScheme === "dark" ? "light-content" : "dark-content"}
+        barStyle={colorScheme === "dark" ? "light-content" : "light-content"}
         backgroundColor={theme.background}
       />
       <Stack.Screen
@@ -325,9 +325,9 @@ export default function SubscriptionSettingsScreen() {
                   formatInfoRow("Platform", subscriptionData.platform)}
               </View>
 
-              <View className="flex-1 bg-white dark:bg-[#2C2F33] rounded-xl p-4 shadow-sm mb-6">
+              <View className="bg-white dark:bg-[#2C2F33] rounded-xl p-4 shadow-sm mb-10">
                 <Text
-                  className="text-lg mb-6"
+                  className="text-lg"
                   style={{
                     color: theme.primaryText,
                     fontFamily: "Montserrat_600SemiBold",
@@ -335,25 +335,25 @@ export default function SubscriptionSettingsScreen() {
                   Manage Your Subscription
                 </Text>
 
-                <Text
-                  className="flex-1 mb-6"
-                  style={{
-                    color: theme.secondaryText,
-                    fontFamily: "Montserrat_400Regular",
-                    wordWrap: "wrap",
-                    textAlign: "center",
-                    flexWrap: "wrap",
-                  }}>
-                  {subscriptionData.isTrial
-                    ? `Your trial will ${
-                        subscriptionData.isAutoRenew
-                          ? "automatically convert to a paid subscription"
-                          : "expire"
-                      } on ${formatDate(subscriptionData.expirationDate)}.`
-                    : `To modify or cancel your subscription, you'll need to visit your ${
-                        Platform.OS === "ios" ? "App Store" : "Play Store"
-                      } account settings.`}
-                </Text>
+                <View className="mb-6">
+                  <Text className="text-base"></Text>
+                  <Text
+                    style={{
+                      color: theme.secondaryText,
+                      fontFamily: "Montserrat_400Regular",
+                      textAlign: "center",
+                    }}>
+                    {subscriptionData.isTrial
+                      ? `Your trial will ${
+                          subscriptionData.isAutoRenew
+                            ? "automatically convert to a paid subscription"
+                            : "expire"
+                        } on ${formatDate(subscriptionData.expirationDate)}.`
+                      : `To modify or cancel your subscription, you'll need to visit your ${
+                          Platform.OS === "ios" ? "App Store" : "Play Store"
+                        } account settings.`}
+                  </Text>
+                </View>
 
                 <TouchableOpacity
                   className="bg-[#26A875] py-3 px-4 rounded-md self-center w-full"
