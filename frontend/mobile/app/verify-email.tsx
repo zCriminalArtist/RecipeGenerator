@@ -13,6 +13,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Haptics from "expo-haptics";
 import * as Notifications from "expo-notifications";
 import { darkTheme, lightTheme } from "@/constants/Colors";
+import tokenService from "@/utils/tokenService";
 
 export default function VerifyingEmailScreen() {
   const { token } = useLocalSearchParams();
@@ -48,8 +49,10 @@ export default function VerifyingEmailScreen() {
 
         if (response.ok) {
           const data = await response.json();
-          await AsyncStorage.setItem("jwt", data.token);
+
+          await tokenService.saveTokens(data.accessToken, data.refreshToken);
           await AsyncStorage.setItem("emailVerified", "true");
+
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
           await Notifications.scheduleNotificationAsync({
@@ -63,7 +66,7 @@ export default function VerifyingEmailScreen() {
           setVerificationStatus("success");
 
           setTimeout(() => {
-            handleContinue(data.token);
+            handleContinue(data.accessToken);
           }, 1500);
         } else {
           setVerificationStatus("error");

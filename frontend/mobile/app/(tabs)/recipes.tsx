@@ -65,7 +65,6 @@ export default function RecipeScreen() {
     [key: number]: boolean;
   }>({});
 
-  // Update state definitions
   const [sortOption, setSortOption] = useState<"recent" | "name">("recent");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [showSortModal, setShowSortModal] = useState(false);
@@ -322,7 +321,6 @@ export default function RecipeScreen() {
       expanded: new Animated.Value(0),
     };
 
-    // Calculate approximate height for instructions based on content
     const instructionsSteps = item.instructions
       .split(/(?:\d+\.\s|\n)/)
       .filter((step) => step.trim() !== "");
@@ -438,7 +436,7 @@ export default function RecipeScreen() {
               style={{
                 height: animatedItem.expanded.interpolate({
                   inputRange: [0, 1],
-                  outputRange: [80, item.recipeIngredients.length * 40 + 10],
+                  outputRange: [80, item.recipeIngredients.length * 40 + 20],
                 }),
                 overflow: "hidden",
                 opacity:
@@ -448,124 +446,127 @@ export default function RecipeScreen() {
                   }) || 1,
               }}
               className="p-2">
-              {item.recipeIngredients.map((recipeIngredient) => (
-                <View
-                  key={recipeIngredient.id}
-                  className={`flex-row items-center py-2 ${
-                    index < item.recipeIngredients.length
-                      ? "border-b border-gray-200 dark:border-gray-700"
-                      : ""
-                  }`}>
-                  <View className="w-1.5 h-1.5 rounded-full bg-[#26A875] mr-2" />
-                  <Text
-                    className="flex-1 text-sm"
-                    style={{
-                      color: theme.primaryText,
-                      fontFamily: "Montserrat_500Medium",
-                    }}>
-                    {recipeIngredient.ingredient.name.replace(
-                      /\b\w+/g,
-                      (word) =>
-                        word.charAt(0).toUpperCase() +
-                        word.slice(1).toLowerCase()
-                    )}
-                  </Text>
+              {item.recipeIngredients.map(
+                (recipeIngredient, ingredientIndex) => (
+                  <View
+                    key={recipeIngredient.id}
+                    className={`flex-row items-center py-2 ${
+                      ingredientIndex < item.recipeIngredients.length - 1
+                        ? "border-b border-gray-200 dark:border-gray-700"
+                        : ""
+                    }`}>
+                    <View className="w-1.5 h-1.5 rounded-full bg-[#26A875] mr-2" />
+                    <Text
+                      className="flex-1 text-sm"
+                      style={{
+                        color: theme.primaryText,
+                        fontFamily: "Montserrat_500Medium",
+                      }}>
+                      {recipeIngredient.ingredient.name.replace(
+                        /\b\w+/g,
+                        (word) =>
+                          word.charAt(0).toUpperCase() +
+                          word.slice(1).toLowerCase()
+                      )}
+                    </Text>
 
-                  <View className="flex-row items-center">
-                    <TextInput
-                      className="ml-2 px-3 py-1 rounded-l-md text-center min-w-[50px]"
-                      style={{
-                        color: theme.primaryText,
-                        backgroundColor:
-                          colorScheme === "dark" ? "#3A3F44" : "#E8ECF4",
-                        fontFamily: "Montserrat_400Regular",
-                        fontSize: 14,
-                      }}
-                      placeholder="Qty"
-                      value={
-                        editedIngredients[recipeIngredient.id]?.quantity !==
-                        undefined
-                          ? editedIngredients[recipeIngredient.id].quantity
-                          : recipeIngredient.quantity
-                      }
-                      onChangeText={(text) =>
-                        setEditedIngredients((prev) => ({
-                          ...prev,
-                          [recipeIngredient.id]: {
-                            quantity: text,
-                            unit:
-                              prev[recipeIngredient.id]?.unit !== undefined
-                                ? prev[recipeIngredient.id].unit
-                                : recipeIngredient.unit,
-                          },
-                        }))
-                      }
-                      onEndEditing={() => {
-                        const editedValue =
-                          editedIngredients[recipeIngredient.id]?.quantity;
-                        if (editedValue !== undefined && editedValue !== "") {
-                          handleUpdate(recipeIngredient.id);
-                        } else if (editedValue === "") {
+                    <View className="flex-row items-center">
+                      <TextInput
+                        className="ml-2 px-3 py-1 rounded-l-md text-center min-w-[50px]"
+                        style={{
+                          color: theme.primaryText,
+                          backgroundColor:
+                            colorScheme === "dark" ? "#3A3F44" : "#E8ECF4",
+                          fontFamily: "Montserrat_400Regular",
+                          fontSize: 14,
+                        }}
+                        placeholder="Qty"
+                        value={
+                          editedIngredients[recipeIngredient.id]?.quantity !==
+                          undefined
+                            ? editedIngredients[recipeIngredient.id].quantity
+                            : recipeIngredient.quantity
+                        }
+                        onChangeText={(text) =>
                           setEditedIngredients((prev) => ({
                             ...prev,
                             [recipeIngredient.id]: {
-                              ...prev[recipeIngredient.id],
-                              quantity: recipeIngredient.quantity,
+                              quantity: text,
+                              unit:
+                                prev[recipeIngredient.id]?.unit !== undefined
+                                  ? prev[recipeIngredient.id].unit
+                                  : recipeIngredient.unit,
                             },
-                          }));
+                          }))
                         }
-                      }}
-                    />
-                    <TextInput
-                      className="px-3 py-1 rounded-r-md text-center min-w-[40px]"
-                      style={{
-                        color: theme.primaryText,
-                        backgroundColor:
-                          colorScheme === "dark" ? "#3A3F44" : "#E8ECF4",
-                        fontFamily: "Montserrat_400Regular",
-                        fontSize: 14,
-                        borderLeftWidth: 1,
-                        borderLeftColor:
-                          colorScheme === "dark" ? "#2C2F33" : "#D1D5DB",
-                      }}
-                      placeholder="Unit"
-                      value={
-                        editedIngredients[recipeIngredient.id]?.unit !==
-                        undefined
-                          ? editedIngredients[recipeIngredient.id].unit
-                          : recipeIngredient.unit
-                      }
-                      onChangeText={(text) =>
-                        setEditedIngredients((prev) => ({
-                          ...prev,
-                          [recipeIngredient.id]: {
-                            quantity:
-                              prev[recipeIngredient.id]?.quantity !== undefined
-                                ? prev[recipeIngredient.id].quantity
-                                : recipeIngredient.quantity,
-                            unit: text,
-                          },
-                        }))
-                      }
-                      onEndEditing={() => {
-                        const editedValue =
-                          editedIngredients[recipeIngredient.id]?.unit;
-                        if (editedValue !== undefined && editedValue !== "") {
-                          handleUpdate(recipeIngredient.id);
-                        } else if (editedValue === "") {
+                        onEndEditing={() => {
+                          const editedValue =
+                            editedIngredients[recipeIngredient.id]?.quantity;
+                          if (editedValue !== undefined && editedValue !== "") {
+                            handleUpdate(recipeIngredient.id);
+                          } else if (editedValue === "") {
+                            setEditedIngredients((prev) => ({
+                              ...prev,
+                              [recipeIngredient.id]: {
+                                ...prev[recipeIngredient.id],
+                                quantity: recipeIngredient.quantity,
+                              },
+                            }));
+                          }
+                        }}
+                      />
+                      <TextInput
+                        className="px-3 py-1 rounded-r-md text-center min-w-[40px]"
+                        style={{
+                          color: theme.primaryText,
+                          backgroundColor:
+                            colorScheme === "dark" ? "#3A3F44" : "#E8ECF4",
+                          fontFamily: "Montserrat_400Regular",
+                          fontSize: 14,
+                          borderLeftWidth: 1,
+                          borderLeftColor:
+                            colorScheme === "dark" ? "#2C2F33" : "#D1D5DB",
+                        }}
+                        placeholder="Unit"
+                        value={
+                          editedIngredients[recipeIngredient.id]?.unit !==
+                          undefined
+                            ? editedIngredients[recipeIngredient.id].unit
+                            : recipeIngredient.unit
+                        }
+                        onChangeText={(text) =>
                           setEditedIngredients((prev) => ({
                             ...prev,
                             [recipeIngredient.id]: {
-                              ...prev[recipeIngredient.id],
-                              unit: recipeIngredient.unit,
+                              quantity:
+                                prev[recipeIngredient.id]?.quantity !==
+                                undefined
+                                  ? prev[recipeIngredient.id].quantity
+                                  : recipeIngredient.quantity,
+                              unit: text,
                             },
-                          }));
+                          }))
                         }
-                      }}
-                    />
+                        onEndEditing={() => {
+                          const editedValue =
+                            editedIngredients[recipeIngredient.id]?.unit;
+                          if (editedValue !== undefined && editedValue !== "") {
+                            handleUpdate(recipeIngredient.id);
+                          } else if (editedValue === "") {
+                            setEditedIngredients((prev) => ({
+                              ...prev,
+                              [recipeIngredient.id]: {
+                                ...prev[recipeIngredient.id],
+                                unit: recipeIngredient.unit,
+                              },
+                            }));
+                          }
+                        }}
+                      />
+                    </View>
                   </View>
-                </View>
-              ))}
+                )
+              )}
             </Animated.View>
 
             <TouchableOpacity

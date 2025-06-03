@@ -19,6 +19,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { RatingForm } from "@/components/onboarding/RatingForm";
 import * as StoreReview from "expo-store-review";
+import tokenService from "@/utils/tokenService";
 
 const TOTAL_STEPS = QUESTIONS.length + 6;
 
@@ -31,15 +32,15 @@ export default function OnboardingScreen() {
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const router = useRouter();
-  const { email, verified, token } = useLocalSearchParams();
+  const { email, verified } = useLocalSearchParams();
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? darkTheme : lightTheme;
 
   useEffect(() => {
     const checkVerification = async () => {
       try {
-        const isVerified = verified === "true" || token != null;
-        if (isVerified && currentStep === 0) {
+        const isVerified = tokenService.isAuthenticated();
+        if ((await isVerified) && currentStep === 0) {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
           setCurrentStep(1);
         }
@@ -88,7 +89,7 @@ export default function OnboardingScreen() {
 
     if (currentStep === QUESTIONS.length + 2) {
       setTimeout(() => {
-        router.replace({ pathname: "/trial", params: { token: token } });
+        router.replace("/trial");
       }, 2000);
       return (
         <View className="flex-1 p-6 justify-center items-center">

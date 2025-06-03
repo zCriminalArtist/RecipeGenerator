@@ -17,6 +17,7 @@ import Icon from "react-native-vector-icons/MaterialIcons";
 import { darkTheme, lightTheme } from "@/constants/Colors";
 import api from "@/utils/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import ContentLoader, { Rect, Circle } from "react-content-loader/native";
 
 interface Ingredient {
   id: number;
@@ -46,6 +47,7 @@ export default function RecipeDetailScreen() {
 
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
   const [notes, setNotes] = useState("");
   const [editedIngredients, setEditedIngredients] = useState<{
@@ -64,11 +66,12 @@ export default function RecipeDetailScreen() {
   const fetchRecipe = async () => {
     try {
       setLoading(true);
+      setError(null);
       const response = await api.get<Recipe>(`/recipes/${recipeId}`);
       setRecipe(response.data);
     } catch (error) {
       console.error("Error fetching recipe:", error);
-      Alert.alert("Error", "Failed to load recipe details");
+      setError("Failed to load recipe details");
     } finally {
       setLoading(false);
     }
@@ -112,17 +115,15 @@ export default function RecipeDetailScreen() {
       const newFavoriteStatus = !isFavorite;
       setIsFavorite(newFavoriteStatus);
 
-      // Update local storage
       const storedFavorites = await AsyncStorage.getItem("favoriteRecipes");
       const favorites = storedFavorites ? JSON.parse(storedFavorites) : {};
       favorites[recipeId] = newFavoriteStatus;
       await AsyncStorage.setItem("favoriteRecipes", JSON.stringify(favorites));
 
-      // Update server
       await api.post(`/recipes/${recipeId}/favorite`);
     } catch (error) {
       console.error("Error toggling favorite:", error);
-      setIsFavorite(!isFavorite); // Revert on error
+      setIsFavorite(!isFavorite);
       Alert.alert("Error", "Failed to update favorite status");
     }
   };
@@ -180,24 +181,200 @@ export default function RecipeDetailScreen() {
     ));
   };
 
-  if (loading) {
-    return (
-      <View
-        className="flex-1 justify-center items-center"
-        style={{ backgroundColor: theme.background }}>
-        <ActivityIndicator size="large" color="#0CD384" />
+  const RecipeHeaderSkeleton = () => (
+    <ContentLoader
+      speed={2}
+      width="100%"
+      height={120}
+      backgroundColor={colorScheme === "dark" ? "#333" : "#f3f3f3"}
+      foregroundColor={colorScheme === "dark" ? "#444" : "#ecebeb"}>
+      <Rect x="0" y="0" rx="4" ry="4" width="70%" height="32" />
+      <Rect x="0" y="45" rx="3" ry="3" width="100%" height="16" />
+      <Rect x="0" y="70" rx="3" ry="3" width="90%" height="16" />
+      <Rect x="0" y="95" rx="3" ry="3" width="80%" height="16" />
+    </ContentLoader>
+  );
+
+  const SectionHeaderSkeleton = () => (
+    <ContentLoader
+      speed={2}
+      width="100%"
+      height={40}
+      backgroundColor={colorScheme === "dark" ? "#333" : "#f3f3f3"}
+      foregroundColor={colorScheme === "dark" ? "#444" : "#ecebeb"}>
+      <Circle cx="12" cy="20" r="10" />
+      <Rect x="30" y="10" rx="4" ry="4" width="40%" height="20" />
+    </ContentLoader>
+  );
+
+  const IngredientSkeleton = () => (
+    <View className="mb-6">
+      <SectionHeaderSkeleton />
+      <View className="mt-2">
+        {[...Array(5)].map((_, index) => (
+          <ContentLoader
+            key={index}
+            speed={2}
+            width="100%"
+            height={50}
+            backgroundColor={colorScheme === "dark" ? "#333" : "#f3f3f3"}
+            foregroundColor={colorScheme === "dark" ? "#444" : "#ecebeb"}>
+            <Circle cx="10" cy="25" r="4" />
+            <Rect x="24" y="15" rx="3" ry="3" width="55%" height="20" />
+            <Rect x="80%" y="15" rx="3" ry="3" width="20%" height="20" />
+          </ContentLoader>
+        ))}
       </View>
-    );
+    </View>
+  );
+
+  const InstructionsSkeleton = () => (
+    <View className="mb-6">
+      <SectionHeaderSkeleton />
+      <View className="mt-2">
+        {[...Array(3)].map((_, index) => (
+          <ContentLoader
+            key={index}
+            speed={2}
+            width="100%"
+            height={80}
+            backgroundColor={colorScheme === "dark" ? "#333" : "#f3f3f3"}
+            foregroundColor={colorScheme === "dark" ? "#444" : "#ecebeb"}>
+            <Rect x="0" y="15" rx="3" ry="3" width="20" height="20" />
+            <Rect x="30" y="15" rx="3" ry="3" width="90%" height="16" />
+            <Rect x="30" y="40" rx="3" ry="3" width="80%" height="16" />
+            <Rect x="30" y="65" rx="3" ry="3" width="60%" height="16" />
+          </ContentLoader>
+        ))}
+      </View>
+    </View>
+  );
+
+  const NotesSkeleton = () => (
+    <View className="mb-6">
+      <SectionHeaderSkeleton />
+      <ContentLoader
+        speed={2}
+        width="100%"
+        height={120}
+        backgroundColor={colorScheme === "dark" ? "#333" : "#f3f3f3"}
+        foregroundColor={colorScheme === "dark" ? "#444" : "#ecebeb"}>
+        <Rect x="0" y="10" rx="5" ry="5" width="100%" height="110" />
+      </ContentLoader>
+    </View>
+  );
+
+  const ActionButtonsSkeleton = () => (
+    <ContentLoader
+      speed={2}
+      width="100%"
+      height={60}
+      backgroundColor={colorScheme === "dark" ? "#333" : "#f3f3f3"}
+      foregroundColor={colorScheme === "dark" ? "#444" : "#ecebeb"}>
+      <Circle cx="15%" cy="30" r="20" />
+      <Circle cx="50%" cy="30" r="20" />
+      <Circle cx="85%" cy="30" r="20" />
+    </ContentLoader>
+  );
+
+  // Error UI component
+  const ErrorView = () => (
+    <View
+      className="flex-1 justify-center items-center px-6"
+      style={{ backgroundColor: theme.background }}>
+      <Icon
+        name="error-outline"
+        size={70}
+        color={theme.secondaryText}
+        style={{ marginBottom: 20 }}
+      />
+      <Text
+        style={{
+          color: theme.primaryText,
+          fontFamily: "Montserrat_600SemiBold",
+          textAlign: "center",
+          fontSize: 18,
+          marginBottom: 12,
+        }}>
+        Oops! Something went wrong
+      </Text>
+      <Text
+        style={{
+          color: theme.secondaryText,
+          fontFamily: "Montserrat_400Regular",
+          textAlign: "center",
+          marginBottom: 30,
+        }}>
+        We couldn't load this recipe. Please try again.
+      </Text>
+      <View className="flex-row space-x-4">
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className="py-3 px-6 rounded-full bg-gray-200 dark:bg-gray-700">
+          <Text
+            style={{
+              color: theme.primaryText,
+              fontFamily: "Montserrat_500Medium",
+            }}>
+            Go Back
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={fetchRecipe}
+          className="py-3 px-6 rounded-full bg-[#26A875]">
+          <Text
+            style={{
+              color: "white",
+              fontFamily: "Montserrat_500Medium",
+            }}>
+            Try Again
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
+  // Skeleton loading view
+  const LoadingView = () => (
+    <View style={{ backgroundColor: theme.background }} className="flex-1">
+      <Stack.Screen
+        options={{
+          title: "Loading Recipe...",
+          headerStyle: {
+            backgroundColor: theme.headerBackground,
+          },
+          headerTintColor: "#8BDBC1",
+          headerTitleStyle: {
+            fontFamily: "Montserrat_600SemiBold",
+          },
+          headerLeft: () => (
+            <TouchableOpacity onPress={() => router.back()} className="ml-2">
+              <Icon name="arrow-back" size={24} color="#8BDBC1" />
+            </TouchableOpacity>
+          ),
+        }}
+      />
+
+      <StatusBar
+        barStyle={colorScheme === "dark" ? "light-content" : "light-content"}
+      />
+
+      <ScrollView className="flex-1 px-5 pt-4">
+        <RecipeHeaderSkeleton />
+        <IngredientSkeleton />
+        <InstructionsSkeleton />
+        <NotesSkeleton />
+        <ActionButtonsSkeleton />
+      </ScrollView>
+    </View>
+  );
+
+  if (loading) {
+    return <LoadingView />;
   }
 
-  if (!recipe) {
-    return (
-      <View
-        className="flex-1 justify-center items-center"
-        style={{ backgroundColor: theme.background }}>
-        <Text style={{ color: theme.primaryText }}>Recipe not found</Text>
-      </View>
-    );
+  if (error || !recipe) {
+    return <ErrorView />;
   }
 
   return (

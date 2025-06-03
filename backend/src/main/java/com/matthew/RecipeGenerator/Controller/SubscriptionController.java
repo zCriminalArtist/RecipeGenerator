@@ -6,27 +6,13 @@ import com.matthew.RecipeGenerator.Dto.AppleReceiptResponse;
 import com.matthew.RecipeGenerator.Dto.UserSubscriptionRequest;
 import com.matthew.RecipeGenerator.Model.User;
 import com.matthew.RecipeGenerator.Model.UserSubscription;
-import com.matthew.RecipeGenerator.Repo.UserRepo;
-import com.matthew.RecipeGenerator.Repo.UserSubscriptionRepo;
-import com.matthew.RecipeGenerator.Service.StripeService;
 import com.matthew.RecipeGenerator.Service.SubscriptionService;
 import com.matthew.RecipeGenerator.Verifier.AppleReceiptVerifier;
-import com.stripe.exception.StripeException;
-import com.stripe.model.*;
-import com.stripe.param.SetupIntentCreateParams;
-import com.stripe.param.SubscriptionItemListParams;
-import com.stripe.param.SubscriptionListParams;
-import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestTemplate;
 
-import java.math.BigDecimal;
-import java.text.SimpleDateFormat;
-import java.time.ZonedDateTime;
 import java.util.*;
 
 @RestController

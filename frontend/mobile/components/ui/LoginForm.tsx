@@ -15,22 +15,20 @@ import { z } from "zod";
 import { useRouter } from "expo-router";
 import { useColorScheme } from "react-native";
 import axios from "axios";
-import * as Haptics from "expo-haptics";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import api from "@/utils/api";
+import tokenService from "@/utils/tokenService";
 import { darkTheme, lightTheme } from "@/constants/Colors";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import Icon from "react-native-vector-icons/MaterialIcons";
 
-interface LoginFormProps {
-  setIsAuthenticated: (isAuthenticated: boolean) => void;
-}
-
 const loginSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters long"),
+  email: z.string().email("Please enter a valid email"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
 });
 type LoginForm = z.infer<typeof loginSchema>;
+
+interface LoginFormProps {
+  setIsAuthenticated?: (isAuthenticated: boolean) => void;
+}
 
 export default function LoginForm({ setIsAuthenticated }: LoginFormProps) {
   const [error, setError] = useState<string | null>(null);
@@ -51,8 +49,9 @@ export default function LoginForm({ setIsAuthenticated }: LoginFormProps) {
       const response = await api.post("/api/auth/login", data);
 
       if (response.status === 200) {
-        const { token } = response.data;
-        await AsyncStorage.setItem("jwt", token);
+        const { accessToken, refreshToken } = response.data;
+        await tokenService.saveTokens(accessToken, refreshToken);
+
         if (setIsAuthenticated) {
           setIsAuthenticated(true);
         } else {
@@ -64,11 +63,11 @@ export default function LoginForm({ setIsAuthenticated }: LoginFormProps) {
       if (axios.isAxiosError(err) && err.response?.status === 401) {
         setError(err.response.data);
       } else if (axios.isAxiosError(err) && err.response?.status === 402) {
-        const { token } = err.response?.data;
-        console.log("Token:", token);
+        const { accessToken, refreshToken } = err.response.data;
+        await tokenService.saveTokens(accessToken, refreshToken);
         router.replace({
           pathname: "/onboarding",
-          params: { email: data.email, token: token },
+          params: { email: data.email },
         });
       } else {
         setError("An error occurred. Please try again later.");

@@ -47,7 +47,6 @@ export default function AccountScreen({ setIsAuthenticated }: LoginFormProps) {
 
   useEffect(() => {
     const form = params.form as string;
-    console.log("Form parameter:", form);
 
     if (form === "register" || form === "login") {
       initialFormRef.current = form;
