@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useContext } from "react";
 import {
   View,
   TextInput,
@@ -36,6 +36,7 @@ import Icon from "react-native-vector-icons/MaterialIcons";
 import axios from "axios";
 import IngredientContainer from "@/components/ui/IngredientContainer";
 import ProfileMenu from "@/components/ui/ProfileMenu";
+import { AuthContext } from "@/app/(tabs)/_layout";
 
 interface Recipe {
   id: number;
@@ -45,6 +46,9 @@ interface Recipe {
 }
 
 export default function HomeScreen() {
+  // Add AuthContext
+  const { logout } = useContext(AuthContext);
+
   const [ingredients, setIngredients] = useState<string[]>([]);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
@@ -245,11 +249,6 @@ export default function HomeScreen() {
     }
   };
 
-  const handleSignOut = async () => {
-    await AsyncStorage.removeItem("jwt");
-    router.replace("/account");
-  };
-
   const renderInstructions = (instructions: string) => {
     const steps = instructions
       .split(/(?:\d+\.\s|\n)/)
@@ -316,6 +315,16 @@ export default function HomeScreen() {
     }
   };
 
+  // Add a handleSignOut function that uses the logout function from AuthContext
+  const handleSignOut = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error("Error signing out:", error);
+      Alert.alert("Error", "Failed to sign out. Please try again.");
+    }
+  };
+
   return (
     <MenuProvider style={{ zIndex: 0 }}>
       <View style={{ backgroundColor: theme.background }} className="flex-1">
@@ -344,7 +353,7 @@ export default function HomeScreen() {
               </Animated.Text>
               <ProfileMenu
                 username={username}
-                onSignOut={handleSignOut}
+                onSignOut={handleSignOut} // Pass the handler that uses AuthContext
                 theme={theme}
               />
             </View>

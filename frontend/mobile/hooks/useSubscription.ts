@@ -12,7 +12,7 @@ const skus = Platform.select({
   android: ["ingredigo_monthly_sub"],
 }) || ["ingredigo_monthly_sub"];
 
-export function useSubscription(token: string | string[]) {
+export function useSubscription() {
   const [products, setProducts] = useState<RNIap.Subscription[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -63,18 +63,6 @@ export function useSubscription(token: string | string[]) {
             const result = await verifyWithBackend(receipt, skus[0]);
             if (result === 200) {
               console.log("Subscription verified successfully");
-              if (typeof token === "string") {
-                console.log("Token:", token);
-                try {
-                  await AsyncStorage.setItem("jwt", token);
-                } catch (error) {
-                  console.error("Error saving token to AsyncStorage:", error);
-                }
-              } else {
-                console.error("Token is not a string");
-                throw new Error("Invalid token type");
-              }
-              console.log("Token saved to AsyncStorage");
 
               await checkAuthStatus();
 
@@ -112,27 +100,18 @@ export function useSubscription(token: string | string[]) {
 
   const verifyWithBackend = async (receipt: string, productId: string) => {
     try {
-      const res = await api.post(
-        "/api/subscription/verify",
-        {
-          platform: Platform.OS,
-          receipt,
-          productId,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const res = await api.post("/api/subscription/verify", {
+        platform: Platform.OS,
+        receipt,
+        productId,
+      });
 
       console.log("Subscription verified:", res.data);
       console.log("Status code:", res.status);
       return res.status;
     } catch (err) {
       setError("Backend verification error");
-      console.error(err);
+      console.error("Error verifying subscription with backend:", err);
       throw err;
     }
   };

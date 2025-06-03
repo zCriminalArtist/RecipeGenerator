@@ -1,7 +1,6 @@
 import { Tabs, usePathname, router } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, createContext } from "react";
 import { Platform, ActivityIndicator, View } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { HapticTab } from "@/components/HapticTab";
 import { IconSymbol } from "@/components/ui/IconSymbol";
@@ -12,11 +11,13 @@ import WelcomeScreen from "../welcome";
 import api from "@/utils/api";
 import { Redirect } from "expo-router";
 import { isAxiosError } from "axios";
+import tokenService from "@/utils/tokenService";
 
 export const AuthContext = React.createContext({
   isAuthenticated: false,
   isSubscribed: false,
   checkAuthStatus: () => {},
+  logout: () => {},
 });
 
 export default function TabLayout() {
@@ -25,47 +26,52 @@ export default function TabLayout() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isSubscribed, setIsSubscribed] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [authToken, setAuthToken] = useState<string | null>(null);
   const pathname = usePathname();
 
   const checkAuthStatus = async () => {
-    setIsLoading(true);
     try {
-      const token = await AsyncStorage.getItem("jwt");
+      setIsLoading(true);
 
-      if (!token) {
-        setIsAuthenticated(false);
-        setIsSubscribed(false);
-        setAuthToken(null);
-        setIsLoading(false);
-        return;
-      }
+      const isAuth = await tokenService.isAuthenticated();
 
-      setAuthToken(token);
-      setIsAuthenticated(true);
-      try {
-        const response = await api.get("/api/subscription/status", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        console.log("Subscription status response:", response.data);
-
-        setIsSubscribed(true);
-      } catch (error) {
-        console.error("Failed to check subscription status:", error);
-        if (isAxiosError(error) && error.response?.status === 401) {
-          await AsyncStorage.removeItem("jwt");
+      if (isAuth) {
+        try {
+          const response = await api.get("/api/auth/me");
+          setIsAuthenticated(true);
+          setIsSubscribed(response.data.subscribed || false);
+        } catch (error) {
+          console.log("Auth verification failed:", error);
           setIsAuthenticated(false);
-          setAuthToken(null);
+          setIsSubscribed(false);
         }
+      } else {
+        setIsAuthenticated(false);
         setIsSubscribed(false);
       }
     } catch (error) {
-      console.error("Auth check failed:", error);
+      console.error("Auth check error:", error);
       setIsAuthenticated(false);
       setIsSubscribed(false);
-      setAuthToken(null);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const logout = async () => {
+    try {
+      const refreshToken = await tokenService.getRefreshToken();
+      if (refreshToken) {
+        try {
+          await api.post("/api/auth/logout", { refreshToken });
+        } catch (error) {
+          console.log("Logout API error (expected if token expired):", error);
+        }
+      }
+    } finally {
+      await tokenService.clearTokens();
+      setIsAuthenticated(false);
+      setIsSubscribed(false);
+      router.replace("/account?form=login");
     }
   };
 
@@ -94,11 +100,11 @@ export default function TabLayout() {
           isAuthenticated: true,
           isSubscribed: false,
           checkAuthStatus,
+          logout,
         }}>
         <Redirect
           href={{
             pathname: "/onboarding",
-            params: { token: authToken },
           }}
         />
       </AuthContext.Provider>
@@ -112,6 +118,7 @@ export default function TabLayout() {
           isAuthenticated: false,
           isSubscribed: false,
           checkAuthStatus,
+          logout,
         }}>
         <WelcomeScreen />
       </AuthContext.Provider>
@@ -124,6 +131,7 @@ export default function TabLayout() {
         isAuthenticated: true,
         isSubscribed: true,
         checkAuthStatus,
+        logout,
       }}>
       <Tabs
         screenOptions={{

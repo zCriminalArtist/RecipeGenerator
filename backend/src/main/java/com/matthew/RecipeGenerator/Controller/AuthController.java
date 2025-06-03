@@ -1,25 +1,18 @@
 package com.matthew.RecipeGenerator.Controller;
 
+import com.matthew.RecipeGenerator.Dto.TokenRefreshRequest;
+import com.matthew.RecipeGenerator.Dto.TokenRefreshResponse;
 import com.matthew.RecipeGenerator.Dto.UserLoginRequest;
 import com.matthew.RecipeGenerator.Dto.UserRegistrationRequest;
 import com.matthew.RecipeGenerator.Model.PasswordResetToken;
+import com.matthew.RecipeGenerator.Model.RefreshToken;
 import com.matthew.RecipeGenerator.Model.User;
-import com.matthew.RecipeGenerator.Model.UserSubscription;
 import com.matthew.RecipeGenerator.Repo.PasswordResetTokenRepo;
 import com.matthew.RecipeGenerator.Repo.UserRepo;
-import com.matthew.RecipeGenerator.Repo.UserSubscriptionRepo;
 import com.matthew.RecipeGenerator.Security.Jwt.JwtUtil;
 import com.matthew.RecipeGenerator.Service.EmailVerificationService;
 import com.matthew.RecipeGenerator.Service.PasswordResetService;
-import com.matthew.RecipeGenerator.Service.StripeService;
-import com.stripe.exception.StripeException;
-import com.stripe.model.*;
-import com.stripe.model.checkout.Session;
-import com.stripe.net.ApiResource;
-import com.stripe.param.EphemeralKeyCreateParams;
-import com.stripe.param.InvoicePayParams;
-import com.stripe.param.PaymentIntentCreateParams;
-import io.jsonwebtoken.ExpiredJwtException;
+import com.matthew.RecipeGenerator.Service.RefreshTokenService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -28,16 +21,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.Flow;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -50,6 +42,27 @@ public class AuthController {
     private final EmailVerificationService emailVerificationService;
     private final PasswordResetService passwordResetService;
     private final PasswordResetTokenRepo tokenRepository;
+    private final RefreshTokenService refreshTokenService;
+
+    @GetMapping("/me")
+    public ResponseEntity<?> getCurrentUser(@AuthenticationPrincipal User user) {
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("authenticated", false));
+        }
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("authenticated", true);
+        response.put("userId", user.getUserId());
+        response.put("username", user.getUsername());
+        response.put("email", user.getEmail());
+        response.put("subscribed", user.getSubscription() != null);
+
+        if (user.getSubscription() != null) {
+            response.put("subscriptionStatus", user.getSubscription().getStatus());
+        }
+
+        return ResponseEntity.ok(response);
+    }
 
     @PostMapping("/reset-password")
     public ResponseEntity<String> resetPassword(@RequestParam String token, @RequestParam String newPassword) {
@@ -85,27 +98,38 @@ public class AuthController {
         if (user != null) {
             Authentication authentication = new UsernamePasswordAuthenticationToken(
                     user, null, user.getAuthorities());
+
             String jwt = jwtUtil.generateToken(authentication);
+            RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
 
             Map<String, Object> response = new HashMap<>();
+            response.put("accessToken", jwt);
+            response.put("refreshToken", refreshToken.getToken());
             response.put("message", "Email verified successfully");
-            response.put("token", jwt);
-            response.put("verified", true);
 
             return ResponseEntity.ok(response);
         } else {
-            return ResponseEntity.badRequest().body("Invalid verification token");
+            return ResponseEntity.badRequest().body("Invalid or expired verification token");
         }
     }
 
     @PostMapping("/refresh-token")
-    public ResponseEntity<?> refreshToken(@RequestParam String token) {
-        try {
-            String newToken = jwtUtil.refreshToken(token);
-            return ResponseEntity.ok(newToken);
-        } catch (ExpiredJwtException e) {
-            return ResponseEntity.status(HttpServletResponse.SC_UNAUTHORIZED).body("Token has expired and cannot be refreshed");
-        }
+    public ResponseEntity<?> refreshToken(@RequestBody TokenRefreshRequest request) {
+        String requestRefreshToken = request.getRefreshToken();
+
+        return refreshTokenService.findByToken(requestRefreshToken)
+                .map(refreshTokenService::verifyExpiration)
+                .map(token -> {
+                    User user = token.getUser();
+                    refreshTokenService.deleteByToken(requestRefreshToken);
+                    RefreshToken newRefreshToken = refreshTokenService.createRefreshToken(user);
+                    Authentication authentication = new UsernamePasswordAuthenticationToken(
+                            user, null, user.getAuthorities());
+                    String accessToken = jwtUtil.generateToken(authentication);
+
+                    return ResponseEntity.ok(new TokenRefreshResponse(accessToken, newRefreshToken.getToken()));
+                })
+                .orElseThrow(() -> new RuntimeException("Refresh token not found"));
     }
 
     @PostMapping("/register")
@@ -150,9 +174,34 @@ public class AuthController {
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String token = jwtUtil.generateToken(authentication);
 
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("accessToken", token);
+        response.put("refreshToken", refreshToken.getToken());
+
         if (user.getSubscription() == null) {
-            return ResponseEntity.status(HttpServletResponse.SC_PAYMENT_REQUIRED).body(Collections.singletonMap("token", token));
+            return ResponseEntity.status(HttpServletResponse.SC_PAYMENT_REQUIRED).body(response);
         }
-        return ResponseEntity.ok(Collections.singletonMap("token", token));
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(@RequestBody String refreshToken) {
+        try {
+            refreshTokenService.findByToken(refreshToken)
+                    .ifPresent(token -> refreshTokenService.deleteByToken(refreshToken));
+
+            Map<String, Boolean> response = new HashMap<>();
+            response.put("success", true);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "Error during sign out: " + e.getMessage());
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
     }
 }

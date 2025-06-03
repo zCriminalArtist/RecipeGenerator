@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
   View,
   Text,
@@ -19,7 +19,7 @@ import { Stack, router } from "expo-router";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { Colors, darkTheme, lightTheme } from "@/constants/Colors";
 import api from "@/utils/api";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { AuthContext } from "@/app/(tabs)/_layout";
 
 interface UserData {
   username: string;
@@ -31,6 +31,8 @@ interface UserData {
 }
 
 export default function AccountSettingsScreen() {
+  const { logout } = useContext(AuthContext);
+
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -110,12 +112,10 @@ export default function AccountSettingsScreen() {
 
   const handleSignOut = async () => {
     try {
-      await AsyncStorage.removeItem("jwt");
-      await AsyncStorage.removeItem("refreshToken");
-      router.replace("/account?form=login");
-      Alert.alert("Signed Out", "You have been signed out successfully.");
+      await logout();
     } catch (error) {
       console.error("Error signing out:", error);
+      Alert.alert("Error", "Failed to sign out. Please try again.");
     }
   };
 

@@ -13,7 +13,6 @@ import { Colors, lightTheme, darkTheme } from "@/constants/Colors";
 import { useRouter } from "expo-router";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { useSubscription } from "@/hooks/useSubscription";
-import { useLocalSearchParams, useSearchParams } from "expo-router/build/hooks";
 import { TrialFeatures } from "@/components/onboarding/TrialFeatures";
 import * as Haptics from "expo-haptics";
 import { TrialReminder } from "@/components/onboarding/TrialReminder";
@@ -21,8 +20,7 @@ import { SubscriptionScreen } from "@/components/onboarding/SubscriptionScreen";
 
 export default function TrialScreen() {
   const colorScheme = useColorScheme();
-  const { token } = useLocalSearchParams();
-  const { products, loading, error, subscribe } = useSubscription(token);
+  const { products, loading, error, subscribe } = useSubscription();
   const monthlyPrice = "$4.99";
   const theme = colorScheme === "dark" ? darkTheme : lightTheme;
   const [page, setPage] = useState(0);

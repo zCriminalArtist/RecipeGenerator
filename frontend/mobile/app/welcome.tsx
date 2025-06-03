@@ -14,8 +14,8 @@ import { useFonts } from "expo-font";
 import { useEffect, useRef, useState } from "react";
 import * as SplashScreen from "expo-splash-screen";
 import LottieView from "lottie-react-native";
+import * as Notifications from "expo-notifications";
 
-// Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
 
 export default function WelcomeScreen() {
@@ -52,6 +52,21 @@ export default function WelcomeScreen() {
         animationRef.current?.play();
       }, 100);
     }
+    (async () => {
+      const { status: existingStatus } =
+        await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
+
+      if (existingStatus !== "granted") {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+
+      if (finalStatus !== "granted") {
+        console.log("Notification permission not granted");
+        return;
+      }
+    })();
   }, []);
 
   return (

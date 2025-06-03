@@ -17,7 +17,9 @@
         "NSInAppPurchaseUsageDescription": "This app uses in-app purchases to provide premium features.",
         "PushNotificationEntitlement": "com.zcriminalartist.ingredigo.push"
       },
-      "associatedDomains": ["applinks:ingredigo.net"]
+      "associatedDomains": [
+        "applinks:ingredigo.net"
+      ]
     },
     "android": {
       "adaptiveIcon": {
@@ -36,7 +38,10 @@
               "pathPrefix": "/verify-email"
             }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ]
     },
@@ -63,7 +68,8 @@
             "useFrameworks": "static"
           }
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true
